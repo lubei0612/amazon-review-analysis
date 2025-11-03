@@ -497,6 +497,9 @@ function renderTableModule(contentId, data, container, showProgressBar = false, 
           bgColor = 'linear-gradient(90deg, #3B82F6, #60A5FA)'  // 蓝色
         }
         
+        // ✅ 调试日志
+        console.log(`📊 进度条生成: ${contentId}, percent=${percent}%, percentValue=${percentValue}%, type=${type}, bgColor=${bgColor}`)
+        
         html += `
           <td class="percent-col">
             <div class="percent-with-bar">

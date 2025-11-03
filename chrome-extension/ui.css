@@ -116,11 +116,13 @@
 }
 
 .progress-bar-container {
-  flex: 1;
-  height: 8px;
-  background: #E5E7EB;
-  border-radius: 4px;
-  overflow: hidden;
+  width: 100% !important;
+  height: 8px !important;
+  background: #E5E7EB !important;
+  border-radius: 4px !important;
+  overflow: hidden !important;
+  position: relative !important;
+  box-sizing: border-box !important;
 }
 
 .progress-bar-default {
@@ -297,18 +299,7 @@
   padding: 12px 20px;
   background: transparent !important;  /* ✅ 去掉黄色背景 */
   border-top: none;
-}
-
-.progress-bar-container {
-  width: 100% !important;
-  height: 8px !important; /* 加粗到8px更明显 */
-  background: #E5E7EB !important;
-  border-radius: 4px !important;
-  overflow: hidden !important;
   margin-bottom: 8px;
-  position: relative !important;
-  box-sizing: border-box !important;
-  border: 1px solid #D1D5DB !important; /* 添加边框，更明显 */
 }
 
 .progress-bar {
