@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "FileScopeMCP": {
+      "command": "node",
+      "args": [
+        "C:/Users/鱼鳍/FileScopeMCP/dist/mcp-server.js",
+        "--base-dir=D:/Users/鱼鳍/Desktop/maijia plug"
+      ],
+      "transport": "stdio",
+      "disabled": false,
+      "alwaysAllow": []
+    }
+  }
+}
+
+

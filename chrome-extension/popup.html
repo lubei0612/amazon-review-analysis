@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amazon评论分析</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+    }
+    
+    .container {
+      padding: 20px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    
+    .header p {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    
+    .status-card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .status-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .status-label {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+    
+    .status-value {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 10px;
+    }
+    
+    .btn-primary {
+      background: #fff;
+      color: #667eea;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      backdrop-filter: blur(10px);
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .footer {
+      text-align: center;
+      font-size: 11px;
+      opacity: 0.7;
+      margin-top: 15px;
+    }
+    
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 10px;
+    }
+    
+    .loading.active {
+      display: block;
+    }
+    
+    .spinner {
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top: 3px solid #fff;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .error {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      margin-bottom: 10px;
+      display: none;
+    }
+    
+    .error.active {
+      display: block;
+    }
+    
+    /* API 设置面板样式 */
+    .settings-panel {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 15px;
+      margin-top: 15px;
+      animation: slideDown 0.3s ease-out;
+    }
+    
+    /* AI Provider 选择器样式优化 */
+    select.input-field {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 35px;
+    }
+    
+    select.input-field option {
+      background: #764ba2;
+      color: white;
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .settings-header h3 {
+      font-size: 14px;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    
+    .form-group {
+      margin-bottom: 12px;
+    }
+    
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 5px;
+      opacity: 0.9;
+    }
+    
+    .input-field {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-size: 13px;
+      font-family: 'Courier New', monospace;
+    }
+    
+    .input-field::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .input-field:focus {
+      outline: none;
+      border-color: rgba(255, 255, 255, 0.5);
+      background: rgba(255, 255, 255, 0.25);
+    }
+    
+    .input-hint {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-top: 5px;
+    }
+    
+    .input-hint a {
+      color: #fff;
+      text-decoration: underline;
+    }
+    
+    .api-status {
+      text-align: center;
+      padding: 8px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.2);
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+    
+    .api-status.success {
+      background: rgba(16, 185, 129, 0.3);
+    }
+    
+    .api-status.error {
+      background: rgba(239, 68, 68, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚀 Amazon评论分析</h1>
+      <p>一键抓取评论，AI智能分析</p>
+    </div>
+    
+    <div class="error" id="error"></div>
+    
+    <div class="status-card">
+      <div class="status-item">
+        <span class="status-label">当前页面</span>
+        <span class="status-value" id="page-status">❌ 非产品页</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">评论数量</span>
+        <span class="status-value" id="review-count">-</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">产品评分</span>
+        <span class="status-value" id="rating">-</span>
+      </div>
+    </div>
+    
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>正在处理...</p>
+    </div>
+    
+    <button class="btn btn-primary" id="analyze-btn" disabled>
+      开始分析
+    </button>
+    
+    <button class="btn btn-secondary" id="refresh-btn">
+      刷新产品信息
+    </button>
+    
+    <button class="btn btn-secondary" id="settings-toggle-btn">
+      ⚙️ API 设置
+    </button>
+    
+    <!-- API 设置面板 -->
+    <div class="settings-panel" id="settings-panel" style="display: none;">
+      <div class="settings-header">
+        <h3>⚙️ AI 配置</h3>
+      </div>
+      
+      <!-- AI Provider 选择器 -->
+      <div class="form-group">
+        <label for="ai-provider-select">AI Provider:</label>
+        <select id="ai-provider-select" class="input-field">
+          <option value="groq">Groq AI (免费，Llama 3.1)</option>
+          <option value="gemini">Gemini 2.5 Pro (付费，更强)</option>
+        </select>
+        <div class="input-hint">
+          选择AI分析引擎
+        </div>
+      </div>
+      
+      <!-- API Key 输入 -->
+      <div class="form-group">
+        <label for="api-key-input">API Key:</label>
+        <input 
+          type="password" 
+          id="api-key-input" 
+          placeholder="输入你的 API Key"
+          class="input-field"
+        />
+        <div class="input-hint" id="api-hint">
+          获取 API Key: <a href="https://console.groq.com/keys" target="_blank" id="api-link">console.groq.com</a>
+        </div>
+      </div>
+      
+      <div class="api-status" id="api-status">
+        ❌ 未配置
+      </div>
+      
+      <button class="btn btn-primary" id="save-api-key-btn">
+        💾 保存设置
+      </button>
+      
+      <button class="btn btn-secondary" id="test-api-btn">
+        🔍 测试连接
+      </button>
+    </div>
+    
+    <div class="footer">
+      即贸技术团队 © 2025
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

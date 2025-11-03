@@ -1,0 +1,278 @@
+// ================================
+// 爬虫门面类 - 统一爬虫接口
+// ================================
+// 
+// 职责：
+// 1. 管理多个爬虫Provider（Outscraper、RapidAPI）
+// 2. 实现降级策略（Outscraper失败 → RapidAPI）
+// 3. 统一返回数据格式
+// 4. 提供进度回调
+// 
+// 使用示例：
+// const crawler = new CrawlerFacade()
+// const reviews = await crawler.crawlReviews('B08N5WRWNW', {
+//   maxReviews: 500,
+//   onProgress: (data) => console.log(data)
+// })
+
+const logger = require('../../utils/logger')
+const OutscraperCrawler = require('./OutscraperCrawler')
+const RapidAPICrawler = require('./RapidAPICrawler')
+const PuppeteerCrawler = require('./PuppeteerCrawler')
+
+class CrawlerFacade {
+  constructor() {
+    // 初始化三个爬虫Provider
+    this.outscraper = new OutscraperCrawler()
+    this.rapidapi = new RapidAPICrawler()
+    this.puppeteer = new PuppeteerCrawler()  // ✅ 添加Puppeteer作为终极备选
+    
+    // 爬虫优先级（Outscraper → RapidAPI → Puppeteer）
+    this.primaryCrawler = this.outscraper
+    this.fallbackCrawler = this.rapidapi
+    this.lastResortCrawler = this.puppeteer  // 总是可用，但速度慢
+    
+    logger.info('✅ CrawlerFacade已初始化')
+    logger.info(`   主爬虫: Outscraper (${this.outscraper.isAvailable() ? '可用' : '未配置'})`)
+    logger.info(`   备用爬虫1: RapidAPI (${this.rapidapi.isAvailable() ? '可用' : '未配置'})`)
+    logger.info(`   备用爬虫2: Puppeteer (${this.puppeteer.isAvailable() ? '可用' : '未配置'})`)
+  }
+  
+  /**
+   * 爬取评论（带降级策略）
+   * 
+   * @param {string} asin - Amazon ASIN
+   * @param {object} options - 配置项
+   * @param {number} options.maxReviews - 最大评论数（默认500）
+   * @param {function} options.onProgress - 进度回调
+   * @param {string} options.domain - Amazon站点（默认'amazon.com'）
+   * @returns {Promise<Array>} 评论数组
+   */
+  async crawlReviews(asin, options = {}) {
+    const {
+      maxReviews = 500,
+      onProgress = null,
+      domain = 'amazon.com'
+    } = options
+    
+    logger.info(`🔄 CrawlerFacade开始爬取: ${asin}`)
+    logger.info(`   目标评论数: ${maxReviews}`)
+    logger.info(`   Amazon站点: ${domain}`)
+    
+    // 优先使用Outscraper
+    if (this.outscraper.isAvailable()) {
+      try {
+        logger.info('🚀 使用 Outscraper 主爬虫...')
+        
+        const reviews = await this.outscraper.getReviews(
+          asin, 
+          maxReviews, 
+          onProgress,
+          domain
+        )
+        
+        logger.info(`✅ Outscraper成功，获取 ${reviews.length} 条评论`)
+        
+        // ✅ 检查空数据并触发降级
+        if (reviews.length === 0) {
+          logger.warn('⚠️ Outscraper返回0条评论，触发降级策略')
+          throw new Error('Outscraper返回空数据')
+        }
+        
+        return {
+          success: true,
+          source: 'Outscraper',
+          reviews: reviews,
+          count: reviews.length,
+          asin: asin
+        }
+        
+      } catch (error) {
+        logger.warn(`❌ Outscraper失败: ${error.message}`)
+        logger.warn('🔄 准备降级到 RapidAPI...')
+        
+        // 继续尝试降级
+      }
+    } else {
+      logger.warn('⚠️ Outscraper未配置，跳过')
+    }
+    
+    // 降级到RapidAPI
+    if (this.rapidapi.isAvailable()) {
+      try {
+        logger.info('🔄 使用 RapidAPI 备用爬虫...')
+        
+        const reviews = await this.rapidapi.getReviews(
+          asin,
+          maxReviews,
+          onProgress
+        )
+        
+        logger.info(`✅ RapidAPI成功，获取 ${reviews.length} 条评论`)
+        
+        return {
+          success: true,
+          source: 'RapidAPI',
+          reviews: reviews,
+          count: reviews.length,
+          asin: asin
+        }
+        
+      } catch (error) {
+        logger.warn(`❌ RapidAPI也失败: ${error.message}`)
+        logger.warn('🔄 准备降级到 Puppeteer...')
+        
+        // 继续尝试终极备选
+      }
+    } else {
+      logger.warn('⚠️ RapidAPI未配置，跳过')
+    }
+    
+    // 终极备选：Puppeteer（总是可用，免费但慢）
+    if (this.puppeteer.isAvailable()) {
+      try {
+        logger.info('🔄 使用 Puppeteer 终极备选爬虫...')
+        
+        const reviews = await this.puppeteer.getReviews(
+          asin,
+          maxReviews,
+          onProgress,
+          domain
+        )
+        
+        logger.info(`✅ Puppeteer成功，获取 ${reviews.length} 条评论`)
+        
+        return {
+          success: true,
+          source: 'Puppeteer',
+          reviews: reviews,
+          count: reviews.length,
+          asin: asin
+        }
+        
+      } catch (error) {
+        logger.error(`❌ Puppeteer也失败: ${error.message}`)
+        throw new Error('所有爬虫都失败了，请稍后重试')
+      }
+    } else {
+      throw new Error('所有爬虫都失败或未配置')
+    }
+  }
+  
+  /**
+   * 获取产品信息（仅Outscraper支持）
+   * 
+   * @param {string} asin - Amazon ASIN
+   * @param {string} marketplace - Amazon站点（默认'amazon.com'）
+   * @returns {Promise<Object>} 产品信息
+   */
+  async getProductInfo(asin, marketplace = 'amazon.com') {
+    if (!this.outscraper.isAvailable()) {
+      logger.warn('⚠️ Outscraper未配置，无法获取产品信息')
+      return {
+        title: 'Amazon Product',
+        price: 'N/A',
+        rating: 0,
+        reviewsCount: 0,
+        asin: asin
+      }
+    }
+    
+    try {
+      logger.info(`📦 获取产品信息: ${asin} (${marketplace})`)
+      
+      // Outscraper支持获取产品详情
+      const productUrl = `https://${marketplace}/dp/${asin}`
+      const result = await this.outscraper.getProductInfo(asin, marketplace)
+      
+      logger.info(`✅ 产品信息获取成功`)
+      
+      return result
+      
+    } catch (error) {
+      logger.warn(`获取产品信息失败: ${error.message}`)
+      return {
+        title: 'Amazon Product',
+        price: 'N/A',
+        rating: 0,
+        reviewsCount: 0,
+        asin: asin
+      }
+    }
+  }
+  
+  /**
+   * 检查爬虫可用性
+   * 
+   * @returns {Object} 爬虫状态
+   */
+  getStatus() {
+    return {
+      outscraper: {
+        available: this.outscraper.isAvailable(),
+        name: 'Outscraper',
+        priority: 'primary',
+        features: ['reviews', 'product_info', 'high_success_rate']
+      },
+      rapidapi: {
+        available: this.rapidapi.isAvailable(),
+        name: 'RapidAPI',
+        priority: 'fallback_1',
+        features: ['reviews', 'fast', 'free_tier']
+      },
+      puppeteer: {
+        available: this.puppeteer.isAvailable(),
+        name: 'Puppeteer',
+        priority: 'fallback_2',
+        features: ['reviews', 'free', 'always_available', 'slow']
+      }
+    }
+  }
+  
+  /**
+   * 获取推荐的爬虫配置建议
+   */
+  getRecommendations() {
+    const status = this.getStatus()
+    
+    // Puppeteer总是可用，所以不会出现完全无爬虫的情况
+    if (!status.outscraper.available && !status.rapidapi.available) {
+      return {
+        status: 'minimal',
+        message: '⚠️ 仅Puppeteer可用（最小配置）',
+        note: 'Puppeteer免费但速度慢，建议配置API爬虫',
+        actions: [
+          '推荐：在.env中设置 OUTSCRAPER_API_KEY',
+          '或设置 RAPIDAPI_KEY 作为备用'
+        ]
+      }
+    }
+    
+    if (status.outscraper.available && status.rapidapi.available) {
+      return {
+        status: 'excellent',
+        message: '✅ 完美配置！三层爬虫都已就绪',
+        config: 'Outscraper → RapidAPI → Puppeteer'
+      }
+    }
+    
+    if (status.outscraper.available) {
+      return {
+        status: 'good',
+        message: '✅ Outscraper + Puppeteer（良好配置）',
+        suggestion: '可选：配置RAPIDAPI_KEY增加中间备用层'
+      }
+    }
+    
+    if (status.rapidapi.available) {
+      return {
+        status: 'basic',
+        message: '⚠️ RapidAPI + Puppeteer（基础方案）',
+        suggestion: '推荐：配置OUTSCRAPER_API_KEY作为主爬虫'
+      }
+    }
+  }
+}
+
+module.exports = CrawlerFacade
+

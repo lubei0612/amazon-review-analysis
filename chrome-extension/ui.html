@@ -1,0 +1,175 @@
+<!-- Amazon 评论分析嵌入式面板 -->
+<div class="jimao-analysis-panel">
+  <!-- 头部 -->
+  <div class="panel-header">
+    <div class="panel-title">
+      <span>📊</span>
+      <span>智能评论分析</span>
+      <span style="font-size: 11px; color: #999; font-weight: normal;">由即贸提供AI支持</span>
+    </div>
+    <div class="panel-subtitle">
+      当前分析结论取自Top Reviews。如需查看全部评论分析，请点击下方按钮开始分析 →
+    </div>
+  </div>
+
+  <!-- 内容区 -->
+  <div class="panel-content">
+    <!-- 分析前占位符 -->
+    <div id="analysis-placeholder" class="analysis-placeholder">
+      <div class="placeholder-content">
+        <div class="placeholder-icon">🚀</div>
+        <h3>准备开始 AI 智能分析</h3>
+        <p>点击下方按钮，即可一键分析该产品的评论数据，获取消费者画像、使用场景、星级影响度等6大维度的深度洞察。</p>
+        <div class="product-info-preview">
+          <div class="info-item">
+            <span class="label">产品:</span>
+            <span class="value" id="product-title">正在加载...</span>
+          </div>
+          <div class="info-item">
+            <span class="label">评论数:</span>
+            <span class="value" id="review-count">0 条</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分析结果容器（初始隐藏） -->
+    <div id="analysis-results" style="display: none;">
+      <!-- 6大模块网格（3行2列） -->
+      <div class="six-modules-grid">
+        
+        <!-- 第一行左：消费者画像 -->
+        <div class="analysis-module consumer-profile-module" id="module-consumer-profile">
+          <div class="module-header">
+            <span class="module-icon">👥</span>
+            <span class="module-title">消费者画像</span>
+          </div>
+          <div class="module-body" id="consumer-profile-content">
+            <!-- 动态填充 -->
+          </div>
+        </div>
+
+        <!-- 第一行右：使用场景 -->
+        <div class="analysis-module" id="module-usage-scenarios">
+          <div class="module-header">
+            <span class="module-icon">🎯</span>
+            <span class="module-title">使用场景</span>
+          </div>
+          <div class="module-body" id="usage-scenarios-content">
+            <!-- 动态填充 -->
+          </div>
+        </div>
+
+        <!-- 第二行左：未被满足的需求 -->
+        <div class="analysis-module" id="module-unmet-needs">
+          <div class="module-header">
+            <span class="module-icon">💡</span>
+            <span class="module-title">未被满足的需求</span>
+          </div>
+          <div class="module-body" id="unmet-needs-content">
+            <!-- 动态填充 -->
+          </div>
+        </div>
+
+        <!-- 第二行右：好评 -->
+        <div class="analysis-module" id="module-positive">
+          <div class="module-header">
+            <span class="module-icon">👍</span>
+            <span class="module-title">好评</span>
+          </div>
+          <div class="module-body" id="positive-content">
+            <!-- 动态填充 -->
+          </div>
+        </div>
+
+        <!-- 第三行左：差评 -->
+        <div class="analysis-module" id="module-negative">
+          <div class="module-header">
+            <span class="module-icon">👎</span>
+            <span class="module-title">差评</span>
+          </div>
+          <div class="module-body" id="negative-content">
+            <!-- 动态填充 -->
+          </div>
+        </div>
+
+        <!-- 第三行右：购买动机 -->
+        <div class="analysis-module" id="module-purchase-motivation">
+          <div class="module-header">
+            <span class="module-icon">🛒</span>
+            <span class="module-title">购买动机</span>
+          </div>
+          <div class="module-body" id="purchase-motivation-content">
+            <!-- 动态填充 -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部操作栏 -->
+  <div class="panel-footer">
+    <div class="footer-note">
+      分析需要 3-5 分钟，完成后将自动打开详细报告页面
+    </div>
+    <button class="view-full-report-btn" id="analyze-btn">
+      🚀 开始AI分析 →
+    </button>
+  </div>
+  
+  <!-- 进度条区域 -->
+  <div class="progress-section" id="progress" style="display: none;">
+    <div class="progress-bar-container">
+      <div class="progress-bar" style="width: 0%;"></div>
+    </div>
+    <p class="status-text" id="status">等待中...</p>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

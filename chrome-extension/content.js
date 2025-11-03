@@ -1,0 +1,596 @@
+// ========================
+// Content Script - 页面注入脚本
+// ========================
+
+console.log('Amazon评论分析助手已加载')
+
+// 提取产品信息
+function extractProductInfo() {
+  const urlMatch = window.location.href.match(/\/dp\/([A-Z0-9]{10})|\/product\/([A-Z0-9]{10})/)
+  const asin = urlMatch ? (urlMatch[1] || urlMatch[2]) : null
+  
+  if (!asin) {
+    return null
+  }
+  
+  // 提取标题
+  const titleElement = document.querySelector('#productTitle, #title')
+  const title = titleElement ? titleElement.textContent.trim() : '未知产品'
+  
+  // 提取评论数
+  const reviewElement = document.querySelector('#acrCustomerReviewText, [data-hook="total-review-count"]')
+  let reviewCount = 0
+  if (reviewElement) {
+    const match = reviewElement.textContent.match(/[\d,]+/)
+    reviewCount = match ? parseInt(match[0].replace(/,/g, '')) : 0
+  }
+  
+  // 提取评分
+  const ratingElement = document.querySelector('.a-icon-star .a-icon-alt, [data-hook="rating-out-of-text"]')
+  const rating = ratingElement ? parseFloat(ratingElement.textContent) : 0
+  
+  // 提取图片
+  const imageElement = document.querySelector('#landingImage, #imgBlkFront')
+  const image = imageElement ? imageElement.src : ''
+  
+  return {
+    asin,
+    title,
+    reviewCount,
+    rating,
+    image,
+    productUrl: window.location.href
+  }
+}
+
+// 注入UI到产品页面
+function injectUI() {
+  // ✅ 1. 先检查是否是产品详情页
+  const productInfo = extractProductInfo()
+  if (!productInfo || !productInfo.asin) {
+    console.log('不是产品详情页，跳过UI注入')
+    return
+  }
+  
+  console.log('✓ 检测到产品详情页，ASIN:', productInfo.asin)
+  
+  // ✅ 2. 尝试多个可能的注入位置
+  let targetElement = null
+  const possibleLocations = [
+    { element: document.querySelector('#above-dp-container'), name: 'above-dp-container' },
+    { element: document.querySelector('#centerCol'), name: 'centerCol' },
+    { element: document.querySelector('#dp-container'), name: 'dp-container' },
+    { element: document.querySelector('#ppd'), name: 'ppd' }
+  ]
+  
+  for (const location of possibleLocations) {
+    if (location.element) {
+      targetElement = location.element
+      console.log(`✓ 找到注入位置: ${location.name}`)
+      break
+    }
+  }
+  
+  if (!targetElement) {
+    console.warn('找不到合适的注入位置，稍后重试...')
+    return
+  }
+  
+  // ✅ 3. 检查是否已注入
+  if (document.getElementById('jimao-analysis-panel')) {
+    console.log('分析面板已存在')
+    return
+  }
+  
+  // ✅ 4. 创建容器
+  const container = document.createElement('div')
+  container.id = 'jimao-analysis-panel'
+  targetElement.insertAdjacentElement('afterend', container)
+  
+  // 加载 UI HTML（不使用 Shadow DOM，直接嵌入）
+  fetch(chrome.runtime.getURL('ui.html'))
+    .then(response => response.text())
+    .then(html => {
+      container.innerHTML = html
+      
+      // 动态加载 CSS
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = chrome.runtime.getURL('ui.css')
+      document.head.appendChild(link)
+      
+      console.log('✓ 分析面板已注入到页面')
+      
+      // 初始化UI
+      initUI(container)
+    })
+    .catch(error => {
+      console.error('注入UI失败:', error)
+    })
+}
+
+// 初始化UI交互
+function initUI(container) {
+  const productInfo = extractProductInfo()
+  
+  if (!productInfo) {
+    console.warn('无法提取产品信息')
+    return
+  }
+  
+  // 显示产品信息
+  const titleEl = container.querySelector('#product-title')
+  const reviewCountEl = container.querySelector('#review-count')
+  
+  if (titleEl) titleEl.textContent = productInfo.title
+  if (reviewCountEl) reviewCountEl.textContent = `${productInfo.reviewCount} 条评论`
+  
+  // 绑定按钮事件
+  const analyzeBtn = container.querySelector('#analyze-btn')
+  
+  if (analyzeBtn) {
+    analyzeBtn.addEventListener('click', () => {
+      startAnalysis(productInfo, container)
+    })
+  }
+}
+
+// 开始分析
+async function startAnalysis(productInfo, container) {
+  const analyzeBtn = container.querySelector('#analyze-btn')
+  const statusEl = container.querySelector('#status')
+  const progressEl = container.querySelector('#progress')
+  const progressBarEl = container.querySelector('.progress-bar')
+  
+  if (analyzeBtn) analyzeBtn.disabled = true
+  if (statusEl) statusEl.textContent = '正在创建分析任务...'
+  if (progressEl) progressEl.style.display = 'block'
+  
+  try {
+    // 发送消息到Background Script
+    const response = await new Promise((resolve) => {
+      chrome.runtime.sendMessage({
+        action: 'startAnalysis',
+        data: productInfo
+      }, resolve)
+    })
+    
+    if (response.success) {
+      if (statusEl) statusEl.textContent = '正在抓取评论...'
+      
+      // 轮询任务状态
+      pollTaskStatus(response.taskId, container)
+    } else {
+      throw new Error(response.error)
+    }
+  } catch (error) {
+    if (statusEl) statusEl.textContent = `错误: ${error.message}`
+    if (analyzeBtn) analyzeBtn.disabled = false
+  }
+}
+
+// 显示分析结果
+function displayAnalysisResults(result, taskId, container) {
+  console.log('🎨 开始渲染UI，数据结构:', result)
+  
+  // 隐藏占位符和进度条
+  const placeholder = container.querySelector('#analysis-placeholder')
+  const progressSection = container.querySelector('#progress')
+  const resultsContainer = container.querySelector('#analysis-results')
+  
+  if (placeholder) placeholder.style.display = 'none'
+  if (progressSection) progressSection.style.display = 'none'
+  if (resultsContainer) {
+    resultsContainer.style.display = 'block'
+    resultsContainer.style.visibility = 'visible'
+    resultsContainer.style.opacity = '1'
+  }
+  
+  // 填充6大模块数据
+  if (result) {
+    console.log('✅ 开始填充模块数据...')
+    
+    // 消费者画像
+    if (result.consumerProfile) {
+      console.log('📊 渲染消费者画像:', result.consumerProfile)
+      renderConsumerProfile(result.consumerProfile, container)
+    } else {
+      console.warn('⚠️ 缺少 consumerProfile 数据')
+    }
+    
+    // 使用场景
+    if (result.usageScenarios) {
+      console.log('📊 渲染使用场景:', result.usageScenarios)
+      renderTableModule('usage-scenarios-content', result.usageScenarios, container)
+    } else {
+      console.warn('⚠️ 缺少 usageScenarios 数据')
+    }
+    
+    // 未被满足的需求
+    if (result.unmetNeeds) {
+      console.log('📊 渲染未满足需求:', result.unmetNeeds)
+      renderTableModule('unmet-needs-content', result.unmetNeeds, container)
+    } else {
+      console.warn('⚠️ 缺少 unmetNeeds 数据')
+    }
+    
+    // 好评（使用 strengths 而不是 positive）
+    if (result.productExperience?.strengths) {
+      console.log('📊 渲染好评:', result.productExperience.strengths)
+      renderTableModule('positive-content', result.productExperience.strengths, container, true, 'positive')
+    } else {
+      console.warn('⚠️ 缺少 productExperience.strengths 数据')
+    }
+    
+    // 差评（使用 weaknesses 而不是 negative）
+    if (result.productExperience?.weaknesses) {
+      console.log('📊 渲染差评:', result.productExperience.weaknesses)
+      renderTableModule('negative-content', result.productExperience.weaknesses, container, true, 'negative')
+    } else {
+      console.warn('⚠️ 缺少 productExperience.weaknesses 数据')
+    }
+    
+    // 购买动机
+    if (result.purchaseMotivation) {
+      console.log('📊 渲染购买动机:', result.purchaseMotivation)
+      renderTableModule('purchase-motivation-content', result.purchaseMotivation, container)
+    } else {
+      console.warn('⚠️ 缺少 purchaseMotivation 数据')
+    }
+    
+    console.log('✅ UI渲染完成！')
+  } else {
+    console.error('❌ result 为空，无法渲染UI')
+  }
+  
+  // 修改底部按钮为"查看完整报告"
+  const analyzeBtn = container.querySelector('#analyze-btn')
+  const footerNote = container.querySelector('.footer-note')
+  
+  if (analyzeBtn) {
+    analyzeBtn.textContent = '📊 查看完整报告 →'
+    analyzeBtn.disabled = false
+    analyzeBtn.onclick = () => {
+      const reportUrl = `http://localhost:3002/#/report/${taskId}`
+      window.open(reportUrl, '_blank')
+    }
+  }
+  
+  if (footerNote) {
+    footerNote.textContent = '当前分析结论取自 Top Reviews，点击右侧按钮查看完整报告'
+  }
+}
+
+// 渲染消费者画像模块
+function renderConsumerProfile(data, container) {
+  console.log('🎨 renderConsumerProfile 被调用，数据:', data)
+  const contentEl = container.querySelector('#consumer-profile-content')
+  if (!contentEl) {
+    console.error('❌ 找不到 #consumer-profile-content 元素')
+    return
+  }
+  if (!data) {
+    console.error('❌ consumerProfile 数据为空')
+    return
+  }
+  
+  let html = ''
+  
+  // 性别占比（如果有数据）
+  if (data.gender) {
+    const malePercent = data.gender.male || 0
+    const femalePercent = data.gender.female || 0
+    
+    html += `
+      <div class="gender-section">
+        <div class="gender-item">
+          <span>
+            <svg class="gender-icon-svg" viewBox="0 0 24 24" fill="url(#maleGradient)">
+              <defs>
+                <linearGradient id="maleGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" style="stop-color:#2563EB;stop-opacity:1" />
+                  <stop offset="${malePercent}%" style="stop-color:#2563EB;stop-opacity:1" />
+                  <stop offset="${malePercent}%" style="stop-color:#DBEAFE;stop-opacity:0.25" />
+                  <stop offset="100%" style="stop-color:#DBEAFE;stop-opacity:0.25" />
+                </linearGradient>
+              </defs>
+              <path d="M9 9c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm12-5v4h-2v-2.6l-3.2 3.2c1.1 1.2 1.7 2.8 1.7 4.4 0 3.9-3.1 7-7 7s-7-3.1-7-7 3.1-7 7-7c1.3 0 2.5.3 3.6.9L16.4 4H14V2h5c.6 0 1 .4 1 1z"/>
+            </svg>
+          </span>
+          <span>${malePercent}%</span>
+        </div>
+        <div class="gender-item">
+          <span>
+            <svg class="gender-icon-svg" viewBox="0 0 24 24" fill="url(#femaleGradient)">
+              <defs>
+                <linearGradient id="femaleGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" style="stop-color:#DB2777;stop-opacity:1" />
+                  <stop offset="${femalePercent}%" style="stop-color:#DB2777;stop-opacity:1" />
+                  <stop offset="${femalePercent}%" style="stop-color:#FCE7F3;stop-opacity:0.25" />
+                  <stop offset="100%" style="stop-color:#FCE7F3;stop-opacity:0.25" />
+                </linearGradient>
+              </defs>
+              <path d="M17.5 9.5C17.5 6.5 15 4 12 4S6.5 6.5 6.5 9.5c0 2.7 2 5 4.5 5.4V17H9v2h2v2h2v-2h2v-2h-2v-2.1c2.5-.4 4.5-2.7 4.5-5.4zM12 13c-1.9 0-3.5-1.6-3.5-3.5S10.1 6 12 6s3.5 1.6 3.5 3.5S13.9 13 12 13z"/>
+            </svg>
+          </span>
+          <span>${femalePercent}%</span>
+        </div>
+      </div>
+    `
+  }
+  
+  // 4维度数据
+  if (data.dimensions) {
+    html += `<div class="dimensions-table">`
+    
+    const dimensionTitles = {
+      personas: '人群特征',
+      moments: '使用时刻',
+      locations: '使用地点',
+      behaviors: '行为'
+    }
+    
+    for (const [key, title] of Object.entries(dimensionTitles)) {
+      let items = data.dimensions[key] || []
+      
+      // ✅ 填充到3行
+      while (items.length < 3) {
+        items.push({ desc: '--', description: '--', percentage: '--', percent: '--' })
+      }
+      
+      html += `
+        <div class="dimension-column">
+          <div class="dimension-header">${title}</div>
+          ${items.slice(0, 3).map(item => {
+            const desc = item.desc || item.description || '--'
+            const percent = item.percent || item.percentage || '--'
+            return `<div class="dimension-item">${desc} (${percent}${percent !== '--' ? '%' : ''})</div>`
+          }).join('')}
+        </div>
+      `
+    }
+    
+    html += `</div>`
+  }
+  
+  contentEl.innerHTML = html
+  console.log('✅ 消费者画像HTML已设置，长度:', html.length)
+}
+
+// 渲染表格模块（使用场景、未被满足的需求、好评、差评、购买动机）
+function renderTableModule(contentId, data, container, showProgressBar = false, type = null) {
+  console.log(`🎨 renderTableModule 被调用: ${contentId}，数据:`, data)
+  const contentEl = container.querySelector(`#${contentId}`)
+  if (!contentEl) {
+    console.error(`❌ 找不到 #${contentId} 元素`)
+    return
+  }
+  
+  // ✅ 即使数据为空也要显示表格
+  const items = Array.isArray(data) ? data : (data?.items || [])
+  let displayItems = items.slice(0, 5)
+  
+  // ✅ 填充到5行（不足用"--"填充）
+  while (displayItems.length < 5) {
+    displayItems.push({
+      aspect: '--',
+      desc: '--',
+      description: '--',
+      name: '--',
+      need: '--',
+      type: '--',
+      percentage: '--',
+      percent: '--',
+      reason: '--'
+    })
+  }
+  
+  console.log(`📊 ${contentId} 数据项数:`, items.length, '显示项数:', displayItems.length)
+  
+  let html = `
+    <table class="analysis-table">
+      <thead>
+        <tr>
+          <th>描述</th>
+          <th>占比</th>
+          <th>原因</th>
+        </tr>
+      </thead>
+      <tbody>
+  `
+  
+  displayItems.forEach(item => {
+    const percent = item.percent || item.percentage || '--'
+    const percentValue = percent !== '--' ? parseInt(percent) : 0
+    
+    html += `<tr>`
+    
+    // 描述列（针对不同模块使用不同字段，截断长度改为10字符）
+    let description = '--'
+    if (contentId === 'purchase-motivation-content') {
+      description = item.type || '--'  // 购买动机显示type
+    } else if (contentId === 'usage-scenarios-content') {
+      description = item.name || item.description || '--'  // 使用场景显示name
+    } else if (contentId === 'unmet-needs-content') {
+      description = item.need || item.description || '--'  // 未满足需求显示need
+    } else {
+      description = item.aspect || item.desc || '--'  // 好评/差评显示aspect
+    }
+    html += `<td class="desc-col">${truncateText(description, 10)}</td>`
+    
+    // 占比列（只有好评/差评显示进度条）
+    const showBar = (type === 'positive' || type === 'negative')
+    
+    if (percent !== '--') {
+      if (showBar) {
+        const barColor = type === 'positive' ? 'positive' : 'negative'
+        html += `
+          <td class="percent-col">
+            <div class="percent-with-bar">
+              <span class="percent-text">${percent}%</span>
+              <div class="progress-bar-container">
+                <div class="progress-bar-${barColor}" style="width: ${percentValue}%"></div>
+              </div>
+            </div>
+          </td>
+        `
+      } else {
+        // 其他模块只显示百分比文字
+        html += `<td class="percent-col"><span class="percent-text">${percent}%</span></td>`
+      }
+    } else {
+      html += `<td class="percent-col"><span class="percent-text">--</span></td>`
+    }
+    
+    // 原因列（使用CSS省略，不做JS截断）
+    const fullReason = item.reason || item.reasons || '--'
+    html += `<td class="reason-col">${fullReason}</td>`
+    
+    html += `</tr>`
+  })
+  
+  html += `
+      </tbody>
+    </table>
+  `
+  
+  contentEl.innerHTML = html
+  console.log(`✅ ${contentId} HTML已设置，长度:`, html.length)
+}
+
+// 文本截断工具
+function truncateText(text, maxLength) {
+  if (!text) return ''
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength) + '...'
+}
+
+// 轮询任务状态
+async function pollTaskStatus(taskId, container) {
+  const statusEl = container.querySelector('#status')
+  const progressBarEl = container.querySelector('.progress-bar')
+  const analyzeBtn = container.querySelector('#analyze-btn')
+  
+  const interval = setInterval(async () => {
+    const response = await new Promise((resolve) => {
+      chrome.runtime.sendMessage({
+        action: 'checkTaskStatus',
+        taskId
+      }, resolve)
+    })
+    
+    if (response.success) {
+      const { status, progress, result } = response
+      
+      // 更新进度条
+      if (progressBarEl) {
+        progressBarEl.style.width = `${progress || 0}%`
+      }
+      
+      // 更新状态文字
+      const statusText = {
+        'pending': '等待中...',
+        'scraping': `正在抓取评论 ${progress || 0}%`,
+        'analyzing': `AI分析中 ${progress || 0}%`,
+        'completed': '分析完成！',
+        'failed': '分析失败'
+      }
+      
+      if (statusEl) {
+        statusEl.textContent = statusText[status] || status
+      }
+      
+      // 任务完成
+      if (status === 'completed') {
+        clearInterval(interval)
+        
+        console.log('🎉 任务完成！原始 result:', result)
+        console.log('📦 result.analysis:', result.analysis)
+        console.log('📦 result 本身:', result)
+        
+        // 显示分析结果（注入到页面）
+        // ✅ 优先使用 result.analysis，如果不存在则使用 result 本身
+        const analysisData = result.analysis || result
+        console.log('🚀 准备渲染，最终数据:', analysisData)
+        
+        displayAnalysisResults(analysisData, taskId, container)
+      }
+      
+      // 任务失败
+      if (status === 'failed') {
+        clearInterval(interval)
+        if (analyzeBtn) analyzeBtn.disabled = false
+        if (statusEl) statusEl.textContent = '分析失败，请重试'
+      }
+    }
+  }, 2000)
+}
+
+// 监听来自Popup的消息
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'getProductInfo') {
+    const info = extractProductInfo()
+    sendResponse({ success: true, data: info })
+    return true  // 保持消息通道打开
+  }
+  
+  if (request.action === 'injectUI') {
+    injectUI()
+    sendResponse({ success: true })
+    return true  // 保持消息通道打开
+  }
+})
+
+// 页面加载完成后自动注入UI
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(injectUI, 1000)
+  })
+} else {
+  setTimeout(injectUI, 1000)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

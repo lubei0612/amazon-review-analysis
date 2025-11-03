@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>即贸 - Amazon评论AI智能分析 Demo（卖家精灵风格）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft YaHei", sans-serif;
+            background-color: #f3f3f3;
+            padding: 20px;
+            line-height: 1.6;
+            font-size: 12px; /* 缩小：从13px改为12px */
+        }
+
+        /* ====== 模拟Amazon商品页 ====== */
+        .amazon-page {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .product-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #0F1111;
+            margin-bottom: 10px;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .stars {
+            color: #FFA41C;
+        }
+
+        .review-count {
+            color: #007185;
+            cursor: pointer;
+        }
+
+        /* ====== 智能分析面板 ====== */
+        .jimao-analysis-panel {
+            margin-top: 20px;
+            border: 1px solid #DDD;
+            border-radius: 4px;
+            background: #FAFAFA;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: white;
+            padding: 14px 20px;
+            border-bottom: 1px solid #DDD;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-subtitle {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .learn-more {
+            color: #FF6600;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .panel-content {
+            padding: 12px; /* 缩小：从16px改为12px */
+            background: white;
+        }
+
+        /* ====== 6大模块网格布局（3行2列） ====== */
+        .six-modules-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px; /* 缩小：从16px改为12px */
+        }
+
+        /* ====== 分析模块通用样式 ====== */
+        .analysis-module {
+            min-height: 200px; /* 缩小：从220px改为200px */
+            border: 1px solid #E5E7EB;
+            border-radius: 4px;
+            background: white;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .module-header {
+            background: #F9FAFB;
+            padding: 8px 12px; /* 缩小：从10px 16px改为8px 12px */
+            border-bottom: 1px solid #E5E7EB;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .module-title {
+            font-size: 13px; /* 缩小：从14px改为13px */
+            font-weight: 600;
+            color: #1F2937;
+        }
+
+        .module-icon {
+            font-size: 14px; /* 缩小：从16px改为14px */
+        }
+
+        /* 模块展开按钮 */
+        .module-expand-btn {
+            margin-left: auto;
+            border: none;
+            background: #E5E7EB;
+            width: 22px;
+            height: 22px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6B7280;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .module-expand-btn:hover {
+            background: #D1D5DB;
+            color: #374151;
+        }
+
+        .module-body {
+            padding: 10px 12px; /* 缩小：从12px 16px改为10px 12px */
+            flex: 1;
+            overflow: hidden; /* 禁止滚动，过长内容省略 */
+        }
+
+        /* ====== 消费者画像模块（特殊布局） ====== */
+        .consumer-profile-module {
+            min-height: 250px; /* 缩小：从280px改为250px */
+        }
+
+        .gender-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 50px;
+            margin: 12px 0 16px 0; /* 缩小：从16px 0 20px 0改为12px 0 16px 0 */
+        }
+
+        .gender-item {
+            text-align: center;
+            font-size: 15px; /* 缩小：从16px改为15px */
+            font-weight: 600;
+            color: #1F2937;
+        }
+
+        .gender-item span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 性别图标SVG样式 */
+        .gender-icon-svg {
+            width: 36px; /* 缩小：从40px改为36px */
+            height: 36px;
+        }
+
+        /* 4维度横向表格 */
+        .dimensions-table {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            border: 1px solid #E5E7EB;
+            border-radius: 4px;
+            overflow: hidden;
+            font-size: 12px; /* 缩小：从13px改为12px */
+        }
+
+        .dimension-column {
+            border-right: 1px solid #E5E7EB;
+        }
+
+        .dimension-column:last-child {
+            border-right: none;
+        }
+
+        .dimension-header {
+            background: #F3F4F6;
+            padding: 6px 8px; /* 缩小：从8px 10px改为6px 8px */
+            font-weight: 600;
+            font-size: 12px; /* 缩小：从13px改为12px */
+            color: #374151;
+            border-bottom: 1px solid #E5E7EB;
+            text-align: center;
+        }
+
+        .dimension-item {
+            padding: 6px 8px; /* 缩小：从8px 10px改为6px 8px */
+            font-size: 11px; /* 缩小：从12px改为11px */
+            color: #4B5563;
+            border-bottom: 1px solid #F3F4F6;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .dimension-item:last-child {
+            border-bottom: none;
+        }
+
+        /* ====== 表格样式（其他5个模块） ====== */
+        .analysis-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px; /* 缩小：从13px改为12px */
+        }
+
+        .analysis-table thead {
+            background: #F9FAFB;
+        }
+
+        .analysis-table th {
+            padding: 6px 10px; /* 缩小：从8px 12px改为6px 10px */
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #E5E7EB;
+            font-size: 12px; /* 缩小：从13px改为12px */
+        }
+
+        .analysis-table td {
+            padding: 8px 10px; /* 缩小：从10px 12px改为8px 10px */
+            border-bottom: 1px solid #F3F4F6;
+            color: #4B5563;
+            vertical-align: top;
+            line-height: 1.5; /* 缩小：从1.6改为1.5 */
+        }
+
+        .analysis-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .analysis-table tbody tr:hover {
+            background: #F9FAFB;
+        }
+
+        /* 表格列宽控制 */
+        .desc-col {
+            width: 100px; /* 缩小：从120px改为100px */
+            min-width: 80px; /* 缩小：从100px改为80px */
+            font-weight: 500;
+            color: #1F2937;
+        }
+
+        .percent-col {
+            width: 15%;
+            min-width: 110px; /* 缩小：从120px改为110px */
+        }
+
+        .reason-col {
+            width: auto;
+            line-height: 1.5;
+            white-space: nowrap;          /* 强制单行 */
+            overflow: hidden;              /* 隐藏溢出 */
+            text-overflow: ellipsis;       /* 省略号 */
+            max-width: 450px;             /* 限制最大宽度 */
+        }
+
+        /* ====== 好评/差评进度条（在百分比右边） ====== */
+        .percent-with-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .percent-text {
+            font-weight: 600;
+            color: #1F2937;
+            min-width: 35px;
+        }
+
+        .progress-bar-container {
+            width: 70px; /* 缩小：从80px改为70px */
+            height: 6px;
+            background: #E5E7EB;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        /* 好评 - 绿色进度条（条上无文字） */
+        .progress-bar-positive {
+            height: 100%;
+            background: linear-gradient(90deg, #10B981, #34D399);
+            transition: width 0.3s ease;
+        }
+
+        /* 差评 - 红色进度条（条上无文字） */
+        .progress-bar-negative {
+            height: 100%;
+            background: linear-gradient(90deg, #EF4444, #F87171);
+            transition: width 0.3s ease;
+        }
+
+        /* ====== 底部操作栏 ====== */
+        .panel-footer {
+            padding: 12px 20px; /* 缩小：从14px 20px改为12px 20px */
+            background: #F9FAFB;
+            border-top: 1px solid #E5E7EB;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-note {
+            font-size: 12px;
+            color: #6B7280;
+        }
+
+        .view-full-report-btn {
+            background: #FF6600;
+            color: white;
+            border: none;
+            padding: 7px 20px; /* 缩小：从8px 24px改为7px 20px */
+            border-radius: 4px;
+            font-size: 12px; /* 缩小：从13px改为12px */
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-full-report-btn:hover {
+            background: #E55A00;
+        }
+
+        /* ====== 模态框样式 ====== */
+        .detail-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.2s;
+        }
+
+        .detail-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 0;
+            border-radius: 8px;
+            max-width: 900px;
+            width: 90%;
+            max-height: 85vh;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 2px solid #E5E7EB;
+            background: #F9FAFB;
+            flex-shrink: 0;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1F2937;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-close {
+            border: none;
+            background: #E5E7EB;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            color: #6B7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .modal-close:hover {
+            background: #D1D5DB;
+            color: #374151;
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .modal-table thead {
+            background: #F9FAFB;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .modal-table th {
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #E5E7EB;
+            font-size: 13px;
+        }
+
+        .modal-table td {
+            padding: 12px;
+            border-bottom: 1px solid #F3F4F6;
+            color: #4B5563;
+            vertical-align: top;
+            line-height: 1.6;
+        }
+
+        .modal-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .modal-table tbody tr:hover {
+            background: #F9FAFB;
+        }
+
+        .modal-desc-col {
+            width: 120px;
+            font-weight: 500;
+            color: #1F2937;
+        }
+
+        .modal-percent-col {
+            width: 100px;
+            font-weight: 600;
+        }
+
+        .modal-reason-col {
+            width: auto;
+            line-height: 1.6;
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ====== 响应式适配 ====== */
+        @media (max-width: 1200px) {
+            .six-modules-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dimensions-table {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dimensions-table {
+                grid-template-columns: 1fr;
+            }
+
+            .gender-section {
+                gap: 30px;
+            }
+
+            .analysis-table th,
+            .analysis-table td {
+                padding: 6px;
+                font-size: 11px;
+            }
+        }
+    </style>
+
+    <!-- SVG图标定义 -->
+    <svg width="0" height="0" style="position: absolute;">
+        <defs>
+            <!-- 男性图标渐变（45%深蓝+55%浅蓝）从下到上填充 -->
+            <linearGradient id="maleGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+                <stop offset="45%" style="stop-color:#3B82F6;stop-opacity:1" />
+                <stop offset="45%" style="stop-color:#BFDBFE;stop-opacity:0.5" />
+                <stop offset="100%" style="stop-color:#BFDBFE;stop-opacity:0.5" />
+            </linearGradient>
+            
+            <!-- 女性图标渐变（55%深粉+45%浅粉）从下到上填充 -->
+            <linearGradient id="femaleGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" style="stop-color:#EC4899;stop-opacity:1" />
+                <stop offset="55%" style="stop-color:#EC4899;stop-opacity:1" />
+                <stop offset="55%" style="stop-color:#FBCFE8;stop-opacity:0.5" />
+                <stop offset="100%" style="stop-color:#FBCFE8;stop-opacity:0.5" />
+            </linearGradient>
+        </defs>
+    </svg>
+</head>
+<body>
+    <!-- 模拟Amazon商品页 -->
+    <div class="amazon-page">
+        <h1 class="product-title">SCHVUBENR 3.5 Inch Apple Slicer - Professional Apple Cutter</h1>
+        
+        <div class="product-rating">
+            <span class="stars">⭐⭐⭐⭐⭐</span>
+            <span class="review-count">7,876 ratings</span>
+        </div>
+
+        <!-- ======== 即贸智能分析面板 ======== -->
+        <div class="jimao-analysis-panel">
+            <!-- 头部 -->
+            <div class="panel-header">
+                <div class="panel-title">
+                    <span>📊</span>
+                    <span>智能评论分析</span>
+                    <span style="font-size: 11px; color: #999; font-weight: normal;">由即贸提供AI支持</span>
+                </div>
+                <div class="panel-subtitle">
+                    当前分析结论取自Top Reviews。如需查看全部评论分析/品类分析/竞品对比，请 <span class="learn-more">点击这里</span>
+                </div>
+            </div>
+
+            <!-- 内容区 -->
+            <div class="panel-content">
+                
+                <!-- ======== 6大模块网格（3行2列） ======== -->
+                <div class="six-modules-grid">
+                    
+                    <!-- 第一行左：消费者画像 -->
+                    <div class="analysis-module consumer-profile-module">
+                        <div class="module-header">
+                            <span class="module-icon">👥</span>
+                            <span class="module-title">消费者画像</span>
+                        </div>
+                        <div class="module-body">
+                            <!-- 性别占比（SVG渐变图标） -->
+                            <div class="gender-section">
+                                <div class="gender-item">
+                                    <span>
+                                        <!-- 男性SVG图标（45%深色填充） -->
+                                        <svg class="gender-icon-svg" viewBox="0 0 24 24" fill="url(#maleGradient)">
+                                            <path d="M9 9c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm12-5v4h-2v-2.6l-3.2 3.2c1.1 1.2 1.7 2.8 1.7 4.4 0 3.9-3.1 7-7 7s-7-3.1-7-7 3.1-7 7-7c1.3 0 2.5.3 3.6.9L16.4 4H14V2h5c.6 0 1 .4 1 1z"/>
+                                        </svg>
+                                    </span>
+                                    <span>45%</span>
+                                </div>
+                                <div class="gender-item">
+                                    <span>
+                                        <!-- 女性SVG图标（55%深色填充） -->
+                                        <svg class="gender-icon-svg" viewBox="0 0 24 24" fill="url(#femaleGradient)">
+                                            <path d="M17.5 9.5C17.5 6.5 15 4 12 4S6.5 6.5 6.5 9.5c0 2.7 2 5 4.5 5.4V17H9v2h2v2h2v-2h2v-2h-2v-2.1c2.5-.4 4.5-2.7 4.5-5.4zM12 13c-1.9 0-3.5-1.6-3.5-3.5S10.1 6 12 6s3.5 1.6 3.5 3.5S13.9 13 12 13z"/>
+                                        </svg>
+                                    </span>
+                                    <span>55%</span>
+                                </div>
+                            </div>
+
+                            <!-- 4维度横向表格 -->
+                            <div class="dimensions-table">
+                                <!-- 列1: 人群特征 -->
+                                <div class="dimension-column">
+                                    <div class="dimension-header">人群特征</div>
+                                    <div class="dimension-item">孙子女孙 (3%)</div>
+                                    <div class="dimension-item">女儿 (2%)</div>
+                                    <div class="dimension-item">丈夫 (2%)</div>
+                                </div>
+
+                                <!-- 列2: 使用时刻 -->
+                                <div class="dimension-column">
+                                    <div class="dimension-header">使用时刻</div>
+                                    <div class="dimension-item">每日使用 (5%)</div>
+                                    <div class="dimension-item">零食时间 (3%)</div>
+                                    <div class="dimension-item">定期使用 (2%)</div>
+                                </div>
+
+                                <!-- 列3: 使用地点 -->
+                                <div class="dimension-column">
+                                    <div class="dimension-header">使用地点</div>
+                                    <div class="dimension-item">公寓 (3%)</div>
+                                    <div class="dimension-item">房车 (2%)</div>
+                                    <div class="dimension-item">家庭 (2%)</div>
+                                </div>
+
+                                <!-- 列4: 行为 -->
+                                <div class="dimension-column">
+                                    <div class="dimension-header">行为</div>
+                                    <div class="dimension-item">均匀切苹果 (22%)</div>
+                                    <div class="dimension-item">制作苹果饺子 (11%)</div>
+                                    <div class="dimension-item">适用于零食 (9%)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 第一行右：使用场景 -->
+                    <div class="analysis-module">
+                        <div class="module-header">
+                            <span class="module-icon">🎯</span>
+                            <span class="module-title">使用场景</span>
+                            <button class="module-expand-btn" onclick="showModuleDetail('使用场景', '🎯')" title="查看完整信息">📋</button>
+                        </div>
+                        <div class="module-body">
+                            <table class="analysis-table">
+                                <thead>
+                                    <tr>
+                                        <th>描述</th>
+                                        <th>占比</th>
+                                        <th>原因</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="desc-col">切苹果</td>
+                                        <td class="percent-col">41%</td>
+                                        <td class="reason-col">顾客发现这个去核器对于切苹果用于零食或者食非常有用。</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">去核和切...</td>
+                                        <td class="percent-col">15%</td>
+                                        <td class="reason-col">顾客使用这个工具去核和切苹果制作苹果零食片，切片和去核初期零食片，总体上...</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">零食</td>
+                                        <td class="percent-col">11%</td>
+                                        <td class="reason-col">顾客发现这个去核器对于准备苹果零食，享任何城生苹果非常有用。</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">用于土豆...</td>
+                                        <td class="percent-col">7%</td>
+                                        <td class="reason-col">顾客发现这个去核器对于食番茄去核紫苹果和用于土豆和紫苹果非常有用。</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">礼物</td>
+                                        <td class="percent-col">7%</td>
+                                        <td class="reason-col">顾客购买这个工具作为治给朋友或家人的礼物，使其成为任意款的绝伴选合...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 第二行左：未被满足的需求 -->
+                    <div class="analysis-module">
+                        <div class="module-header">
+                            <span class="module-icon">💡</span>
+                            <span class="module-title">未被满足的需求</span>
+                            <button class="module-expand-btn" onclick="showModuleDetail('未被满足的需求', '💡')" title="查看完整信息">📋</button>
+                        </div>
+                        <div class="module-body">
+                            <table class="analysis-table">
+                                <thead>
+                                    <tr>
+                                        <th>描述</th>
+                                        <th>占比</th>
+                                        <th>原因</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="desc-col">持久耐用</td>
+                                        <td class="percent-col">35%</td>
+                                        <td class="reason-col">许多客户将该产品称为耐用产品，寿命长，是值得投资的优质产品。</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">更锋利的...</td>
+                                        <td class="percent-col">15%</td>
+                                        <td class="reason-col">客户赞扬该产品改进更大、更锋利的刀片改进了其功能，以便更精确地切片和去核。</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">薄苹果片</td>
+                                        <td class="percent-col">8%</td>
+                                        <td class="reason-col">一些用户赞赏该产品能够制作各种食品和零食的薄苹果片的能力。</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">生活更轻松</td>
+                                        <td class="percent-col">8%</td>
+                                        <td class="reason-col">用户发现该产品使去核和去核变得更容易，更高效，从而显著改善了他们的...</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">更早购买</td>
+                                        <td class="percent-col">8%</td>
+                                        <td class="reason-col">一些用户希望他们更早地发现该产品，或者该产品在去头发已经存在了。</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 第二行右：好评（绿色进度条） -->
+                    <div class="analysis-module">
+                        <div class="module-header">
+                            <span class="module-icon">👍</span>
+                            <span class="module-title">好评</span>
+                            <button class="module-expand-btn" onclick="showModuleDetail('好评', '👍')" title="查看完整信息">📋</button>
+                        </div>
+                        <div class="module-body">
+                            <table class="analysis-table">
+                                <thead>
+                                    <tr>
+                                        <th>描述</th>
+                                        <th>占比</th>
+                                        <th>原因</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="desc-col">易于使用</td>
+                                        <td class="percent-col">
+                                            <div class="percent-with-bar">
+                                                <span class="percent-text">41%</span>
+                                                <div class="progress-bar-container">
+                                                    <div class="progress-bar-positive" style="width: 41%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="reason-col">顾客发现这个去核器易于使用目受欢迎，特别提到了强出功能，可以轻松去...</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">坚固耐用</td>
+                                        <td class="percent-col">
+                                            <div class="percent-with-bar">
+                                                <span class="percent-text">20%</span>
+                                                <div class="progress-bar-container">
+                                                    <div class="progress-bar-positive" style="width: 20%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="reason-col">用户提到这个去核器坚固耐用，给人一种锋利用可靠的感觉，深受切顾的精...</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">锋利刀片</td>
+                                        <td class="percent-col">
+                                            <div class="percent-with-bar">
+                                                <span class="percent-text">9%</span>
+                                                <div class="progress-bar-container">
+                                                    <div class="progress-bar-positive" style="width: 9%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="reason-col">顾客赞扬这个去核器具有锋利精确的刀片，能有效切割苹果，它能够干净利...</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">高效</td>
+                                        <td class="percent-col">
+                                            <div class="percent-with-bar">
+                                                <span class="percent-text">7%</span>
+                                                <div class="progress-bar-container">
+                                                    <div class="progress-bar-positive" style="width: 7%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="reason-col">用户发现这个去核器在性能上快速高效，能够完美地切割肯皮夏，整体去核效...</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">优质</td>
+                                        <td class="percent-col">
+                                            <div class="percent-with-bar">
+                                                <span class="percent-text">7%</span>
+                                                <div class="progress-bar-container">
+                                                    <div class="progress-bar-positive" style="width: 7%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="reason-col">用户赞扬这个去核器的优质，认为物有所值，强家惟存其实用性。</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 第三行左：差评（红色进度条） -->
+                    <div class="analysis-module">
+                        <div class="module-header">
+                            <span class="module-icon">👎</span>
+                            <span class="module-title">差评</span>
+                            <button class="module-expand-btn" onclick="showModuleDetail('差评', '👎')" title="查看完整信息">📋</button>
+                        </div>
+                        <div class="module-body">
+                            <table class="analysis-table">
+                                <thead>
+                                    <tr>
+                                        <th>描述</th>
+                                        <th>占比</th>
+                                        <th>原因</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="desc-col">难以使用</td>
+                                        <td class="percent-col">
+                                            <div class="percent-with-bar">
+                                                <span class="percent-text">37%</span>
+                                                <div class="progress-bar-container">
+                                                    <div class="progress-bar-negative" style="width: 37%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="reason-col">用户发现使用这个去核器太大苹果时很困难，因为部件很容易滑落，需要更...</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">刀片不够锋利</td>
+                                        <td class="percent-col">
+                                            <div class="percent-with-bar">
+                                                <span class="percent-text">21%</span>
+                                                <div class="progress-bar-container">
+                                                    <div class="progress-bar-negative" style="width: 21%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="reason-col">用户提到去核器的刀片不够锋利，导致它们体验较差，使得去核变水果困难...</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">无效</td>
+                                        <td class="percent-col">
+                                            <div class="percent-with-bar">
+                                                <span class="percent-text">8%</span>
+                                                <div class="progress-bar-container">
+                                                    <div class="progress-bar-negative" style="width: 8%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="reason-col">用户发现这个去核器对去草莓，较大的苹果和浪费无效，存在人提到较低音...</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">切割不均匀</td>
+                                        <td class="percent-col">
+                                            <div class="percent-with-bar">
+                                                <span class="percent-text">8%</span>
+                                                <div class="progress-bar-container">
+                                                    <div class="progress-bar-negative" style="width: 8%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="reason-col">顾客发现这个去核器不能够切得到整齐近水果的边缘，导致中间有一个更坏...</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">质量差</td>
+                                        <td class="percent-col">
+                                            <div class="percent-with-bar">
+                                                <span class="percent-text">5%</span>
+                                                <div class="progress-bar-container">
+                                                    <div class="progress-bar-negative" style="width: 5%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="reason-col">用户对这个去核器表示失望，提到质量差，认为它在功能上有些花哨。</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 第三行右：购买动机 -->
+                    <div class="analysis-module">
+                        <div class="module-header">
+                            <span class="module-icon">🛒</span>
+                            <span class="module-title">购买动机</span>
+                            <button class="module-expand-btn" onclick="showModuleDetail('购买动机', '🛒')" title="查看完整信息">📋</button>
+                        </div>
+                        <div class="module-body">
+                            <table class="analysis-table">
+                                <thead>
+                                    <tr>
+                                        <th>描述</th>
+                                        <th>占比</th>
+                                        <th>原因</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="desc-col">Good Value</td>
+                                        <td class="percent-col">50%</td>
+                                        <td class="reason-col">顾客发现这个去核器物有所值，他们满意欢喜的选择，认为这是还不错的实...</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">Quality</td>
+                                        <td class="percent-col">12%</td>
+                                        <td class="reason-col">顾客发现这个工具非常棒锋利利用，采用优质材料制成，双出坚固自使用寿...</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">Great Ap...</td>
+                                        <td class="percent-col">12%</td>
+                                        <td class="reason-col">这个去核器被赞扬外推性好个一个出色的苹果去核和切片工具，用户发现它合...</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">Easy To ...</td>
+                                        <td class="percent-col">4%</td>
+                                        <td class="reason-col">顾客对这个去核器的易用性印象深刻，他们说苹人喜欢用它切苹果，提供了...</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="desc-col">Convenient</td>
+                                        <td class="percent-col">4%</td>
+                                        <td class="reason-col">顾客发现这个去核器非常易于使用，为他们的水果准备梗了便利，这个去...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- 6大模块网格结束 -->
+
+            </div>
+
+            <!-- 底部 -->
+            <div class="panel-footer">
+                <div class="footer-note">
+                    当前分析结论取自 <strong>Top Reviews</strong>
+                </div>
+                <button class="view-full-report-btn" onclick="alert('跳转到Web端完整报告页面')">
+                    查看完整报告 →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 -->
+    <div id="detailModal" class="detail-modal" onclick="if(event.target === this) closeModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">
+                    <span id="modalIcon"></span>
+                    <span id="modalModuleName"></span>
+                </div>
+                <button class="modal-close" onclick="closeModal()" title="关闭">×</button>
+            </div>
+            <div class="modal-body">
+                <table class="modal-table" id="modalTable">
+                    <thead>
+                        <tr>
+                            <th class="modal-desc-col">描述</th>
+                            <th class="modal-percent-col">占比</th>
+                            <th class="modal-reason-col">原因</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalTableBody">
+                        <!-- 动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模块数据
+        const moduleData = {
+            '使用场景': [
+                { desc: '切苹果', percent: '41%', reason: '顾客发现这个去核器对于切苹果用于零食或者食非常有用，特别是对于准备健康零食和日常食用苹果非常方便。' },
+                { desc: '去核和切苹果', percent: '15%', reason: '顾客使用这个工具去核和切苹果制作苹果零食片，切片和去核初期零食片，总体上效果不错，但有些用户提到需要更锋利的刀片以获得更好的切割效果。' },
+                { desc: '零食', percent: '11%', reason: '顾客发现这个去核器对于准备苹果零食，享用任何场合生苹果非常有用，使得制作健康零食变得更加便捷和高效。' },
+                { desc: '用于土豆和苹果', percent: '7%', reason: '顾客发现这个去核器对于处理番茄、去核紫苹果和用于土豆和紫苹果非常有用，展示了其多功能性和广泛的应用场景。' },
+                { desc: '礼物', percent: '7%', reason: '顾客购买这个工具作为送给朋友或家人的礼物，使其成为任意场合的绝佳选择，特别适合厨房爱好者和健康饮食倡导者。' }
+            ],
+            '未被满足的需求': [
+                { desc: '持久耐用', percent: '35%', reason: '许多客户将该产品称为耐用产品，寿命长，是值得投资的优质产品，期待产品能够在长期使用中保持良好的性能和质量。' },
+                { desc: '更锋利的刀片', percent: '15%', reason: '客户赞扬该产品改进更大、更锋利的刀片改进了其功能，以便更精确地切片和去核，希望刀片能够保持锋利度更长时间，减少更换频率。' },
+                { desc: '薄苹果片', percent: '8%', reason: '一些用户赞赏该产品能够制作各种食品和零食的薄苹果片的能力，希望产品能够提供更多的切片厚度选项，满足不同烹饪需求。' },
+                { desc: '生活更轻松', percent: '8%', reason: '用户发现该产品使去核和去核变得更容易，更高效，从而显著改善了他们的厨房工作流程，节省了大量时间和精力。' },
+                { desc: '更早购买', percent: '8%', reason: '一些用户希望他们更早地发现该产品，或者该产品在去年就已经存在了，表达了对产品的高度认可和满意，认为它是厨房必备工具。' }
+            ],
+            '好评': [
+                { desc: '易于使用', percent: '41%', reason: '顾客发现这个去核器易于使用且受欢迎，特别提到了强大功能，可以轻松去核和切片苹果，即使是厨房新手也能快速上手使用。' },
+                { desc: '坚固耐用', percent: '20%', reason: '用户提到这个去核器坚固耐用，给人一种锋利可靠的感觉，深受切割质量的称赞，材质厚实，手感扎实，长期使用不易损坏。' },
+                { desc: '锋利刀片', percent: '9%', reason: '顾客赞扬这个去核器具有锋利精确的刀片，能有效切割苹果，它能够干净利落地去核，切片整齐均匀，大大提高了厨房工作效率。' },
+                { desc: '高效', percent: '7%', reason: '用户发现这个去核器在性能上快速高效，能够完美地切割苹果，整体去核效果优秀，节省了大量准备食材的时间，提升了烹饪体验。' },
+                { desc: '优质', percent: '7%', reason: '用户赞扬这个去核器的优质材料和做工，认为物有所值，强调其实用性和性价比，是厨房工具中的优选产品，值得推荐给他人。' }
+            ],
+            '差评': [
+                { desc: '难以使用', percent: '37%', reason: '用户发现使用这个去核器处理较大苹果时很困难，因为部件很容易滑落，需要更多力气才能完成切割，操作过程不够顺畅，存在安全隐患。' },
+                { desc: '刀片不够锋利', percent: '21%', reason: '用户提到去核器的刀片不够锋利，导致使用体验较差，使得去核和切割水果变得困难，需要反复施力，影响了产品的整体满意度。' },
+                { desc: '无效', percent: '8%', reason: '用户发现这个去核器对于处理草莓、较大的苹果和某些水果无效，存在一些用户提到较低的适用性，限制了产品的使用范围和灵活性。' },
+                { desc: '切割不均匀', percent: '8%', reason: '顾客发现这个去核器不能够切得到整齐贴近水果的边缘，导致中间有一个较大的果核残留，切片大小不一致，影响了食材的美观度和实用性。' },
+                { desc: '质量差', percent: '5%', reason: '用户对这个去核器表示失望，提到质量差，认为它在功能上有些不足，材质不够结实，容易损坏，不符合他们对产品质量的期望。' }
+            ],
+            '购买动机': [
+                { desc: 'Good Value', percent: '50%', reason: '顾客发现这个去核器物有所值，他们对满意的选择表示欢喜，认为这是还不错的实用厨房工具，价格合理，性价比高，是性价比之选。' },
+                { desc: 'Quality', percent: '12%', reason: '顾客发现这个工具非常棒锋利实用，采用优质材料制成，具有坚固的使用寿命，做工精良，细节处理到位，展现了制造商的用心和专业。' },
+                { desc: 'Great Apple Slicer', percent: '12%', reason: '这个去核器被赞扬为一个出色的苹果去核和切片工具，用户发现它非常适合日常使用，功能全面，满足了大部分苹果处理需求，是厨房好帮手。' },
+                { desc: 'Easy To Use', percent: '4%', reason: '顾客对这个去核器的易用性印象深刻，他们说家人喜欢用它切苹果，提供了便捷的使用体验，操作简单直观，无需复杂的学习过程。' },
+                { desc: 'Convenient', percent: '4%', reason: '顾客发现这个去核器非常易于使用，为他们的水果准备带来了便利，这个去核器简化了厨房工作，让健康饮食变得更加轻松和愉快。' }
+            ]
+        };
+
+        // 显示模块详情
+        function showModuleDetail(moduleName, icon) {
+            document.getElementById('modalIcon').textContent = icon;
+            document.getElementById('modalModuleName').textContent = moduleName;
+            
+            const data = moduleData[moduleName] || [];
+            const tbody = document.getElementById('modalTableBody');
+            tbody.innerHTML = '';
+            
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                
+                // 描述列
+                const tdDesc = document.createElement('td');
+                tdDesc.className = 'modal-desc-col';
+                tdDesc.textContent = item.desc;
+                tr.appendChild(tdDesc);
+                
+                // 占比列
+                const tdPercent = document.createElement('td');
+                tdPercent.className = 'modal-percent-col';
+                
+                // 如果是好评或差评，添加进度条
+                if (moduleName === '好评' || moduleName === '差评') {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'percent-with-bar';
+                    
+                    const percentText = document.createElement('span');
+                    percentText.className = 'percent-text';
+                    percentText.textContent = item.percent;
+                    
+                    const barContainer = document.createElement('div');
+                    barContainer.className = 'progress-bar-container';
+                    
+                    const bar = document.createElement('div');
+                    bar.className = moduleName === '好评' ? 'progress-bar-positive' : 'progress-bar-negative';
+                    bar.style.width = item.percent;
+                    
+                    barContainer.appendChild(bar);
+                    wrapper.appendChild(percentText);
+                    wrapper.appendChild(barContainer);
+                    tdPercent.appendChild(wrapper);
+                } else {
+                    tdPercent.textContent = item.percent;
+                }
+                
+                tr.appendChild(tdPercent);
+                
+                // 原因列
+                const tdReason = document.createElement('td');
+                tdReason.className = 'modal-reason-col';
+                tdReason.textContent = item.reason;
+                tr.appendChild(tdReason);
+                
+                tbody.appendChild(tr);
+            });
+            
+            document.getElementById('detailModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // ESC键关闭
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+
+</body>
+</html>

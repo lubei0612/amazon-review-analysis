@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/rapidapi-review-collection-test/requirements.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-03T02:25:26.463Z",
+      "trigger": "initial",
+      "approvalId": "approval_1762136726448_ioura2qdo",
+      "approvalTitle": "需求文档 - RapidAPI评论采集功能测试与验证"
+    }
+  ]
+}

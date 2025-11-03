@@ -1,0 +1,634 @@
+/* ====== 嵌入式分析面板样式 (参考 amazon-review-analysis-demo.html) ====== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 主容器 */
+#jimao-analysis-panel {
+  margin: 20px 0;
+  border: 1px solid #DDD;
+  border-radius: 4px;
+  background: #FAFAFA;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft YaHei", sans-serif;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.jimao-analysis-panel {
+  margin: 20px 0;
+  border: 1px solid #DDD;
+  border-radius: 4px;
+  background: #FAFAFA;
+  overflow: hidden;
+}
+
+.panel-header {
+  background: white;
+  padding: 14px 20px;
+  border-bottom: 1px solid #DDD;
+}
+
+.panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-subtitle {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.learn-more {
+  color: #FF6600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.panel-content {
+  padding: 12px;
+  background: white;
+  min-height: 200px;
+}
+
+/* ====== 强制可见样式（修复UI不显示问题） ====== */
+#analysis-results {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 300px !important;
+}
+
+.analysis-table {
+  display: table !important;
+  visibility: visible !important;
+}
+
+.analysis-table td,
+.analysis-table th {
+  color: #333 !important;
+  visibility: visible !important;
+}
+
+.module-body {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+#consumer-profile-content,
+#usage-scenarios-content,
+#unmet-needs-content,
+#positive-content,
+#negative-content,
+#purchase-motivation-content {
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 50px !important;
+}
+
+/* 分析占位符 */
+.analysis-placeholder {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+/* ====== 进度条样式 ====== */
+.percent-with-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.percent-text {
+  min-width: 40px;
+  font-weight: 500;
+  color: #333;
+}
+
+.progress-bar-container {
+  flex: 1;
+  height: 8px;
+  background: #E5E7EB;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-default {
+  height: 100%;
+  background: linear-gradient(90deg, #3B82F6, #60A5FA);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-bar-positive {
+  height: 100%;
+  background: linear-gradient(90deg, #10B981, #34D399);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-bar-negative {
+  height: 100%;
+  background: linear-gradient(90deg, #EF4444, #F87171);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #E5E7EB;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111;
+  margin: 0;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+
+.modal-close:hover {
+  color: #111;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.modal-body p {
+  line-height: 1.8;
+  color: #333;
+  margin: 0;
+}
+
+.placeholder-content {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.placeholder-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.placeholder-content h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1F2937;
+  margin-bottom: 12px;
+}
+
+.placeholder-content p {
+  font-size: 13px;
+  color: #6B7280;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.product-info-preview {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 20px;
+  padding: 16px;
+  background: #F9FAFB;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.info-item .label {
+  color: #6B7280;
+  font-weight: 500;
+}
+
+.info-item .value {
+  color: #1F2937;
+  font-weight: 600;
+}
+
+/* 底部操作栏 */
+.panel-footer {
+  padding: 12px 20px;
+  background: #F9FAFB;
+  border-top: 1px solid #E5E7EB;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-note {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.view-full-report-btn {
+  background: #FF6600;
+  color: white;
+  border: none;
+  padding: 7px 20px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-full-report-btn:hover {
+  background: #E55A00;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 102, 0, 0.3);
+}
+
+.view-full-report-btn:active {
+  transform: translateY(0);
+}
+
+.view-full-report-btn:disabled {
+  background: #D1D5DB;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 进度条区域 - 绿色精致版 */
+.progress-section {
+  padding: 12px 20px;
+  background: transparent !important;  /* ✅ 去掉黄色背景 */
+  border-top: none;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 4px !important;  /* ✅ 细小进度条（从6px改为4px） */
+  background: #E5E7EB !important;
+  border-radius: 2px;
+  overflow: hidden !important;  /* ✅ 防止内容溢出 */
+  margin-bottom: 8px;
+  position: relative !important;
+  box-sizing: border-box !important;
+}
+
+.progress-bar {
+  height: 100% !important;  /* ✅ 严格限制高度 */
+  max-height: 4px !important;
+  background: linear-gradient(90deg, #10B981, #34D399) !important;  /* ✅ 绿色渐变 */
+  transition: width 0.4s ease !important;
+  border-radius: 2px;
+  position: absolute !important;
+  left: 0 !important;  /* ✅ 从左开始 */
+  top: 0 !important;
+  bottom: 0 !important;
+  transform-origin: left center !important;
+  box-sizing: border-box !important;
+  will-change: width;
+}
+
+.status-text {
+  font-size: 12px;
+  color: #6B7280;  /* ✅ 灰色文字，更低调 */
+  text-align: center;
+  font-weight: 400;
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+}
+
+/* ====== 6大模块网格布局（3行2列） ====== */
+.six-modules-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ====== 分析模块通用样式 ====== */
+.analysis-module {
+  min-height: 200px;
+  border: 1px solid #E5E7EB;
+  border-radius: 4px;
+  background: white;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.module-header {
+  background: #F9FAFB;
+  padding: 8px 12px;
+  border-bottom: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.module-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.module-icon {
+  font-size: 14px;
+}
+
+.module-body {
+  padding: 10px 12px;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ====== 消费者画像模块（特殊布局） ====== */
+.consumer-profile-module {
+  min-height: 250px;
+}
+
+.gender-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 50px;
+  margin: 12px 0 16px 0;
+}
+
+.gender-item {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.gender-item span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 性别图标SVG样式 */
+.gender-icon-svg {
+  width: 36px;
+  height: 36px;
+}
+
+/* 4维度横向表格 */
+.dimensions-table {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid #E5E7EB;
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 12px;
+}
+
+.dimension-column {
+  border-right: 1px solid #E5E7EB;
+}
+
+.dimension-column:last-child {
+  border-right: none;
+}
+
+.dimension-header {
+  background: #F3F4F6;
+  padding: 6px 8px;
+  font-weight: 600;
+  font-size: 12px;
+  color: #374151;
+  border-bottom: 1px solid #E5E7EB;
+  text-align: center;
+}
+
+.dimension-item {
+  padding: 6px 8px;
+  font-size: 11px;
+  color: #4B5563;
+  border-bottom: 1px solid #F3F4F6;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.dimension-item:last-child {
+  border-bottom: none;
+}
+
+/* ====== 表格样式（其他5个模块） ====== */
+.analysis-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.analysis-table thead {
+  background: #F9FAFB;
+}
+
+.analysis-table th {
+  padding: 6px 10px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #E5E7EB;
+  font-size: 12px;
+}
+
+.analysis-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #F3F4F6;
+  color: #4B5563;
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.analysis-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.analysis-table tbody tr:hover {
+  background: #F9FAFB;
+}
+
+/* 表格列宽控制 */
+.desc-col {
+  width: 100px;
+  min-width: 80px;
+  font-weight: 500;
+  color: #1F2937;
+}
+
+.percent-col {
+  width: 15%;
+  min-width: 110px;
+}
+
+.reason-col {
+  width: auto;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 450px;
+}
+
+/* ====== 好评/差评进度条（在百分比右边） ====== */
+.percent-with-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.percent-text {
+  font-weight: 600;
+  color: #1F2937;
+  min-width: 35px;
+}
+
+.progress-bar-container-inline {
+  width: 70px;
+  height: 6px;
+  background: #E5E7EB;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+/* 好评 - 绿色进度条 */
+.progress-bar-positive {
+  height: 100%;
+  background: linear-gradient(90deg, #10B981, #34D399);
+  transition: width 0.3s ease;
+}
+
+/* 差评 - 红色进度条 */
+.progress-bar-negative {
+  height: 100%;
+  background: linear-gradient(90deg, #EF4444, #F87171);
+  transition: width 0.3s ease;
+}
+
+/* 响应式 */
+@media (max-width: 1200px) {
+  .six-modules-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dimensions-table {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .panel-header {
+    padding: 12px 16px;
+  }
+  
+  .panel-content {
+    padding: 16px;
+  }
+  
+  .product-info-preview {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .panel-footer {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+  
+  .view-full-report-btn {
+    width: 100%;
+  }
+
+  .dimensions-table {
+    grid-template-columns: 1fr;
+  }
+
+  .gender-section {
+    gap: 30px;
+  }
+
+  .analysis-table th,
+  .analysis-table td {
+    padding: 6px;
+    font-size: 11px;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "outscraper": {
+      "command": "uvx",
+      "args": ["outscraper-mcp-server"],
+      "env": {
+        "OUTSCRAPER_API_KEY": "M2UyNTc2NDYyMjQxNDVmNjhiMDY2YzZlMDE4MDQ5MTJ8MjYyNTMwY2RhOA"
+      }
+    }
+  }
+}
+
+
