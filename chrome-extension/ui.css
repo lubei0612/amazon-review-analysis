@@ -314,6 +314,9 @@
 .progress-bar {
   /* 所有样式由HTML inline style和JavaScript控制，CSS不干预 */
   /* 不设置width、background等，避免!important覆盖inline style */
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
 }
 
 .status-text {

@@ -501,8 +501,8 @@ function renderTableModule(contentId, data, container, showProgressBar = false, 
           <td class="percent-col">
             <div class="percent-with-bar">
               <span class="percent-text" style="font-weight:600;color:#1F2937;">${percent}%</span>
-              <div class="progress-bar-container" style="width:100%;height:6px;background:#E5E7EB;border-radius:3px;overflow:hidden;margin-top:4px;">
-                <div style="height:100%;width:${percentValue}%;background:${bgColor};border-radius:3px;transition:width 0.3s ease;"></div>
+              <div class="progress-bar-container" style="width:100%;height:6px;background:#E5E7EB;border-radius:3px;overflow:hidden;margin-top:4px;position:relative;">
+                <div style="position:absolute;left:0;top:0;height:100%;width:${percentValue}%;background:${bgColor};border-radius:3px;transition:width 0.3s ease;z-index:1;"></div>
               </div>
             </div>
           </td>
@@ -713,15 +713,22 @@ async function pollTaskStatus(taskId, container) {
     if (response.success) {
       const { status, progress, result } = response
       
-      // 更新进度条 - 强制设置颜色（不依赖CSS）
+      // 更新进度条 - 使用完整inline style（不依赖CSS）
       if (progressBarEl) {
         const progressValue = Math.round(progress || 0)
+        
+        // ✅ 完整的inline style设置，确保从左到右填充
+        progressBarEl.style.position = 'absolute'
+        progressBarEl.style.left = '0'
+        progressBarEl.style.top = '0'
         progressBarEl.style.width = `${progressValue}%`
-        progressBarEl.style.background = 'linear-gradient(90deg, #10B981, #34D399)'  // 绿色渐变
         progressBarEl.style.height = '100%'
+        progressBarEl.style.background = 'linear-gradient(90deg, #10B981, #34D399)'
         progressBarEl.style.borderRadius = '3px'
         progressBarEl.style.transition = 'width 0.3s ease'
-        console.log(`📊 进度更新: ${progressValue}%, status: ${status}`)
+        progressBarEl.style.zIndex = '1'
+        
+        console.log(`📊 进度更新: ${progressValue}%, status: ${status}, width已设置`)
       }
       
       // 更新状态文字
