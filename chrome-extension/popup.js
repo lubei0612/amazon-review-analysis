@@ -119,9 +119,9 @@ async function startAnalysis() {
 // 加载 API Key 状态
 async function loadApiKeyStatus() {
   try {
-    const result = await chrome.storage.local.get(['groqApiKey', 'aiProvider'])
-    const apiKey = result.groqApiKey
-    const provider = result.aiProvider || 'groq'  // 默认 groq
+    const result = await chrome.storage.local.get(['geminiApiKey', 'aiProvider'])
+    const apiKey = result.geminiApiKey
+    const provider = result.aiProvider || 'gemini'  // 默认 gemini
     
     const apiStatus = document.getElementById('api-status')
     const apiInput = document.getElementById('api-key-input')
@@ -170,19 +170,15 @@ async function saveApiKey() {
   }
   
   // 基本格式验证（警告但不阻止保存）
-  if (provider === 'groq' && !apiKey.startsWith('gsk_')) {
-    apiStatus.textContent = '⚠️ Groq API Key 通常以 gsk_ 开头'
-    apiStatus.className = 'api-status error'
-    // 但仍然允许保存（可能用户使用了不同的格式）
-  } else if (provider === 'gemini' && !apiKey.startsWith('sk-')) {
-    apiStatus.textContent = '⚠️ Gemini API Key 通常以 sk- 开头'
+  if (provider === 'gemini' && !apiKey.startsWith('sk-') && !apiKey.startsWith('AIzaSy')) {
+    apiStatus.textContent = '⚠️ Gemini API Key 通常以 sk- 或 AIzaSy 开头'
     apiStatus.className = 'api-status error'
     // 但仍然允许保存
   }
   
   try {
     await chrome.storage.local.set({ 
-      groqApiKey: apiKey,      // 字段名保持不变，兼容性
+      geminiApiKey: apiKey,
       aiProvider: provider     // 保存 Provider 选择
     })
     
