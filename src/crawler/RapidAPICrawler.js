@@ -13,8 +13,8 @@ class RapidAPICrawler {
     
     // ✅ 可用站点列表（按优先级排序）
     // 注意：US站点可能需要付费套餐，CA/UK等站点通常免费可用
-    this.availableDomains = ['CA', 'UK', 'DE', 'FR', 'IT', 'ES', 'JP']
-    this.currentDomain = 'CA' // 默认使用加拿大站点
+    this.availableDomains = ['US', 'CA', 'UK', 'DE', 'FR', 'IT', 'ES', 'JP']
+    this.currentDomain = 'US' // 默认使用美国站点
     
     if (!this.apiKey) {
       logger.warn('⚠️ RAPIDAPI_KEY 未配置，RapidAPI爬虫不可用')
@@ -81,8 +81,16 @@ class RapidAPICrawler {
         const reviews = this.parseReviews(reviewsData, asin)
         allReviews.push(...reviews)
         
-        // ✅ 进度回调
-        const progress = maxReviews === Infinity ? 0 : Math.min(100, Math.round((allReviews.length / maxReviews) * 100))
+        // ✅ 进度回调 - 修复无限模式下的进度计算
+        let progress
+        if (maxReviews === Infinity) {
+          // 无限模式：基于页数估算进度(假设最多100页，避免进度为0)
+          progress = Math.min(Math.round((page / maxPages) * 100), 99) // 最多到99%，留1%给完成
+        } else {
+          // 有限模式：基于评论数
+          progress = Math.min(100, Math.round((allReviews.length / maxReviews) * 100))
+        }
+        
         if (onProgress) {
           onProgress({
             current: allReviews.length,

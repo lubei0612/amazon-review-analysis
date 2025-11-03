@@ -263,7 +263,10 @@ function displayAnalysisResults(result, taskId, container) {
 
 // 渲染消费者画像模块
 function renderConsumerProfile(data, container) {
-  console.log('🎨 renderConsumerProfile 被调用，数据:', data)
+  console.log('🎨 renderConsumerProfile 被调用')
+  console.log('📋 完整数据:', JSON.stringify(data).substring(0, 500))
+  console.log('📋 数据keys:', Object.keys(data || {}))
+  
   const contentEl = container.querySelector('#consumer-profile-content')
   if (!contentEl) {
     console.error('❌ 找不到 #consumer-profile-content 元素')
@@ -271,6 +274,7 @@ function renderConsumerProfile(data, container) {
   }
   if (!data) {
     console.error('❌ consumerProfile 数据为空')
+    contentEl.innerHTML = '<div style="padding:10px;color:#999;">暂无消费者画像数据</div>'
     return
   }
   
@@ -279,6 +283,8 @@ function renderConsumerProfile(data, container) {
   // ✅ 兼容新旧数据结构
   // 性别占比（如果有数据）
   const genderData = data.genderRatio || data.gender // 新结构用genderRatio，旧结构用gender
+  console.log('👥 genderData:', genderData)
+  
   if (genderData) {
     const malePercent = genderData.male || 0
     const femalePercent = genderData.female || 0
@@ -324,6 +330,15 @@ function renderConsumerProfile(data, container) {
   // ✅ 4维度数据（兼容新旧结构）
   // 新结构：demographics, usageTime, usageLocation, behaviors
   // 旧结构：dimensions { personas, moments, locations, behaviors }
+  
+  console.log('📋 检查dimensions字段:', {
+    hasDimensions: !!data.dimensions,
+    hasDemographics: !!data.demographics,
+    hasUsageTime: !!data.usageTime,
+    hasUsageLocation: !!data.usageLocation,
+    hasBehaviors: !!data.behaviors
+  })
+  
   const hasDimensions = data.dimensions || (data.demographics && data.usageTime && data.usageLocation && data.behaviors)
   
   if (hasDimensions) {
@@ -341,6 +356,8 @@ function renderConsumerProfile(data, container) {
       locations: { title: '使用地点', data: data.usageLocation || [] },
       behaviors: { title: '行为', data: data.behaviors || [] }
     }
+    
+    console.log('📋 dimensionMap:', Object.keys(dimensionMap).map(k => `${k}: ${dimensionMap[k].data.length}条`))
     
     for (const [key, config] of Object.entries(dimensionMap)) {
       let items = config.data
@@ -364,6 +381,13 @@ function renderConsumerProfile(data, container) {
     }
     
     html += `</div>`
+  } else {
+    console.warn('⚠️ 没有找到dimensions数据')
+    html += '<div style="padding:10px;color:#999;">暂无维度数据</div>'
+  }
+  
+  if (html.length === 0) {
+    html = '<div style="padding:10px;color:#999;">消费者画像数据格式异常</div>'
   }
   
   contentEl.innerHTML = html
@@ -497,14 +521,17 @@ async function pollTaskStatus(taskId, container) {
       
       // 更新进度条
       if (progressBarEl) {
-        progressBarEl.style.width = `${progress || 0}%`
+        const progressValue = Math.round(progress || 0)
+        progressBarEl.style.width = `${progressValue}%`
+        console.log(`📊 进度更新: ${progressValue}%, status: ${status}`)
       }
       
       // 更新状态文字
+      const progressValue = Math.round(progress || 0)
       const statusText = {
         'pending': '等待中...',
-        'scraping': `正在抓取评论 ${progress || 0}%`,
-        'analyzing': `AI分析中 ${progress || 0}%`,
+        'scraping': `正在抓取评论 ${progressValue}%`,
+        'analyzing': `AI分析中 ${progressValue}%`,
         'completed': '分析完成！',
         'failed': '分析失败'
       }

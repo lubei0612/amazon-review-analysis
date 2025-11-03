@@ -16,7 +16,7 @@ class AnalysisService {
   /**
    * 执行完整的六维度分析（优化版：异步批量并发）
    */
-  async analyzeAll(reviews) {
+  async analyzeAll(reviews, onProgress = null) {
     try {
       if (!reviews || reviews.length === 0) {
         throw new Error('没有评论数据可供分析')
@@ -29,6 +29,27 @@ class AnalysisService {
       
       // ✅ 使用Promise.allSettled并发执行所有分析（即使某个失败也不影响其他）
       logger.info('📡 发起7个并发AI调用...')
+      
+      // ✅ 进度追踪：7个分析任务
+      const totalTasks = 7
+      let completedTasks = 0
+      
+      const wrapWithProgress = async (promise, taskName) => {
+        const result = await promise
+        completedTasks++
+        const progress = 50 + Math.round((completedTasks / totalTasks) * 50) // 50%-100%
+        if (onProgress) {
+          onProgress({
+            progress,
+            current: completedTasks,
+            total: totalTasks,
+            message: `AI分析进度: ${taskName} 完成 (${completedTasks}/${totalTasks})`
+          })
+        }
+        logger.info(`✓ ${taskName} 完成 (${completedTasks}/${totalTasks})`)
+        return result
+      }
+      
       const [
         consumerProfileResult,
         usageScenariosResult,
@@ -38,13 +59,13 @@ class AnalysisService {
         purchaseMotivationResult,
         unmetNeedsResult
       ] = await Promise.allSettled([
-        this.analyzeConsumerProfile(reviews, systemPrompt),
-        this.analyzeUsageScenarios(reviews, systemPrompt),
-        this.analyzeStarRatingImpact(reviews, systemPrompt),
-        this.analyzeProductStrengths(reviews, systemPrompt),
-        this.analyzeProductWeaknesses(reviews, systemPrompt),
-        this.analyzePurchaseMotivation(reviews, systemPrompt),
-        this.analyzeUnmetNeeds(reviews, systemPrompt)
+        wrapWithProgress(this.analyzeConsumerProfile(reviews, systemPrompt), '消费者画像'),
+        wrapWithProgress(this.analyzeUsageScenarios(reviews, systemPrompt), '使用场景'),
+        wrapWithProgress(this.analyzeStarRatingImpact(reviews, systemPrompt), '星级影响'),
+        wrapWithProgress(this.analyzeProductStrengths(reviews, systemPrompt), '产品好评'),
+        wrapWithProgress(this.analyzeProductWeaknesses(reviews, systemPrompt), '产品差评'),
+        wrapWithProgress(this.analyzePurchaseMotivation(reviews, systemPrompt), '购买动机'),
+        wrapWithProgress(this.analyzeUnmetNeeds(reviews, systemPrompt), '未满足需求')
       ])
       
       const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2)

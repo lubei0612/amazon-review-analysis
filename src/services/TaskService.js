@@ -82,9 +82,13 @@ class TaskService {
       // ✅ 使用统一的爬虫接口（自动降级：Outscraper → RapidAPI）
       const crawlResult = await this.crawler.crawlReviews(task.asin, {
         maxReviews: targetCount,
-        onProgress: (progress) => {
+        onProgress: (crawlProgress) => {
+          // 爬取进度：0%-50%
+          // crawlProgress.progress 已经是 1-99 的整数
+          const actualProgress = Math.min(Math.round((crawlProgress.progress || 0) * 0.5), 50)
+          logger.info(`📊 爬取进度回调: ${crawlProgress.progress}% → 转换为总进度: ${actualProgress}%`)
           this.updateTask(taskId, { 
-            progress: Math.min(progress.progress * 0.5, 50)  // 爬取占50%进度
+            progress: actualProgress
           })
         },
         domain: 'amazon.com'
@@ -105,7 +109,12 @@ class TaskService {
       // 3. AI分析
       this.updateTask(taskId, { status: 'analyzing', progress: 50 })
       
-      const analysisResult = await this.analysisService.analyzeAll(sortedReviews)
+      const analysisResult = await this.analysisService.analyzeAll(sortedReviews, (progress) => {
+        // AI分析进度：50%-100%
+        this.updateTask(taskId, {
+          progress: progress.progress
+        })
+      })
       
       // 4. 完成
       this.updateTask(taskId, {
