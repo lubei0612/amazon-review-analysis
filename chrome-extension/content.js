@@ -276,10 +276,12 @@ function renderConsumerProfile(data, container) {
   
   let html = ''
   
+  // ✅ 兼容新旧数据结构
   // 性别占比（如果有数据）
-  if (data.gender) {
-    const malePercent = data.gender.male || 0
-    const femalePercent = data.gender.female || 0
+  const genderData = data.genderRatio || data.gender // 新结构用genderRatio，旧结构用gender
+  if (genderData) {
+    const malePercent = genderData.male || 0
+    const femalePercent = genderData.female || 0
     
     html += `
       <div class="gender-section">
@@ -319,30 +321,41 @@ function renderConsumerProfile(data, container) {
     `
   }
   
-  // 4维度数据
-  if (data.dimensions) {
+  // ✅ 4维度数据（兼容新旧结构）
+  // 新结构：demographics, usageTime, usageLocation, behaviors
+  // 旧结构：dimensions { personas, moments, locations, behaviors }
+  const hasDimensions = data.dimensions || (data.demographics && data.usageTime && data.usageLocation && data.behaviors)
+  
+  if (hasDimensions) {
     html += `<div class="dimensions-table">`
     
-    const dimensionTitles = {
-      personas: '人群特征',
-      moments: '使用时刻',
-      locations: '使用地点',
-      behaviors: '行为'
+    // 映射新旧字段名
+    const dimensionMap = data.dimensions ? {
+      personas: { title: '人群特征', data: data.dimensions.personas || [] },
+      moments: { title: '使用时刻', data: data.dimensions.moments || [] },
+      locations: { title: '使用地点', data: data.dimensions.locations || [] },
+      behaviors: { title: '行为', data: data.dimensions.behaviors || [] }
+    } : {
+      personas: { title: '人群特征', data: data.demographics || [] },
+      moments: { title: '使用时刻', data: data.usageTime || [] },
+      locations: { title: '使用地点', data: data.usageLocation || [] },
+      behaviors: { title: '行为', data: data.behaviors || [] }
     }
     
-    for (const [key, title] of Object.entries(dimensionTitles)) {
-      let items = data.dimensions[key] || []
+    for (const [key, config] of Object.entries(dimensionMap)) {
+      let items = config.data
       
       // ✅ 填充到3行
       while (items.length < 3) {
-        items.push({ desc: '--', description: '--', percentage: '--', percent: '--' })
+        items.push({ desc: '--', description: '--', percentage: '--', percent: '--', persona: '--', occasion: '--', place: '--', behavior: '--' })
       }
       
       html += `
         <div class="dimension-column">
-          <div class="dimension-header">${title}</div>
+          <div class="dimension-header">${config.title}</div>
           ${items.slice(0, 3).map(item => {
-            const desc = item.desc || item.description || '--'
+            // 兼容多种字段名
+            const desc = item.persona || item.occasion || item.place || item.behavior || item.desc || item.description || '--'
             const percent = item.percent || item.percentage || '--'
             return `<div class="dimension-item">${desc} (${percent}${percent !== '--' ? '%' : ''})</div>`
           }).join('')}
