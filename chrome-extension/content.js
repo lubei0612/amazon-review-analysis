@@ -147,12 +147,23 @@ async function startAnalysis(productInfo, container) {
   if (progressEl) progressEl.style.display = 'block'
   
   try {
+    // 检查扩展context是否有效
+    if (!chrome.runtime?.id) {
+      throw new Error('扩展已重新加载，请刷新页面后重试（按F5或Ctrl+R）')
+    }
+    
     // 发送消息到Background Script
-    const response = await new Promise((resolve) => {
+    const response = await new Promise((resolve, reject) => {
       chrome.runtime.sendMessage({
         action: 'startAnalysis',
         data: productInfo
-      }, resolve)
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(`扩展通信失败: ${chrome.runtime.lastError.message}。请刷新页面后重试。`))
+        } else {
+          resolve(response)
+        }
+      })
     })
     
     if (response.success) {
@@ -518,12 +529,34 @@ async function pollTaskStatus(taskId, container) {
   const analyzeBtn = container.querySelector('#analyze-btn')
   
   const interval = setInterval(async () => {
-    const response = await new Promise((resolve) => {
+    // 检查扩展context是否有效
+    if (!chrome.runtime?.id) {
+      clearInterval(interval)
+      if (statusEl) statusEl.textContent = '扩展已重新加载，请刷新页面'
+      console.error('Extension context invalidated. Please refresh the page.')
+      return
+    }
+    
+    const response = await new Promise((resolve, reject) => {
       chrome.runtime.sendMessage({
         action: 'checkTaskStatus',
         taskId
-      }, resolve)
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          clearInterval(interval)
+          reject(new Error(`扩展通信失败: ${chrome.runtime.lastError.message}`))
+        } else {
+          resolve(response)
+        }
+      })
+    }).catch(error => {
+      clearInterval(interval)
+      if (statusEl) statusEl.textContent = '通信错误，请刷新页面'
+      console.error('Poll error:', error)
+      return null
     })
+    
+    if (!response) return
     
     if (response.success) {
       const { status, progress, result } = response
