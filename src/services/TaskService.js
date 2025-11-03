@@ -71,12 +71,13 @@ class TaskService {
       
       let rawReviews = []
       
-      // ✅ 动态调整爬取数量
-      const targetCount = task.reviewCount 
-        ? Math.min(task.reviewCount, 500)
-        : 500
+      // ✅ 全量爬取模式（不限制数量）
+      // 如果产品页面提供了评论数，则爬取全部；否则默认爬取所有可用评论
+      const targetCount = task.reviewCount || Infinity
       
-      logger.info(`🎯 目标爬取数量: ${targetCount} 条`)
+      logger.info(`🎯 目标爬取数量: ${targetCount === Infinity ? '全量（无限制）' : targetCount + ' 条'}`)
+      logger.info(`📊 产品总评论数: ${task.reviewCount || '未知'}`)
+      logger.info(`⚡ 爬取策略: 全量模式（不设上限）`)
       
       // ✅ 使用统一的爬虫接口（自动降级：Outscraper → RapidAPI）
       const crawlResult = await this.crawler.crawlReviews(task.asin, {

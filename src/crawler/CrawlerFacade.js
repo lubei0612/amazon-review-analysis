@@ -43,20 +43,20 @@ class CrawlerFacade {
    * 
    * @param {string} asin - Amazon ASIN
    * @param {object} options - 配置项
-   * @param {number} options.maxReviews - 最大评论数（默认500）
+   * @param {number} options.maxReviews - 最大评论数（默认Infinity，全量爬取）
    * @param {function} options.onProgress - 进度回调
    * @param {string} options.domain - Amazon站点（默认'amazon.com'）
    * @returns {Promise<Array>} 评论数组
    */
   async crawlReviews(asin, options = {}) {
     const {
-      maxReviews = 500,
+      maxReviews = Infinity,
       onProgress = null,
       domain = 'amazon.com'
     } = options
     
     logger.info(`🔄 CrawlerFacade开始爬取: ${asin}`)
-    logger.info(`   目标评论数: ${maxReviews}`)
+    logger.info(`   目标评论数: ${maxReviews === Infinity ? '全量（无限制）' : maxReviews + '条'}`)
     logger.info(`   Amazon站点: ${domain}`)
     
     // 优先使用Outscraper
