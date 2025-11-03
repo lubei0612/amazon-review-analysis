@@ -248,11 +248,8 @@ function handleProviderChange(e) {
   const input = document.getElementById('api-key-input')
   
   if (provider === 'gemini') {
-    input.placeholder = '输入你的 Gemini API Key (以 sk- 开头)'
-    hint.innerHTML = '获取 API Key: <a href="https://aihubmix.com/" target="_blank" id="api-link">aihubmix.com</a>'
-  } else {
-    input.placeholder = '输入你的 Groq API Key (以 gsk_ 开头)'
-    hint.innerHTML = '获取 API Key: <a href="https://console.groq.com/keys" target="_blank" id="api-link">console.groq.com</a>'
+    input.placeholder = '输入你的 Gemini API Key (sk- 或 AIzaSy 开头)'
+    hint.innerHTML = '获取 API Key: <a href="https://aistudio.google.com/app/apikey" target="_blank" id="api-link">aistudio.google.com</a>'
   }
 }
 
