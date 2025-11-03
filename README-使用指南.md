@@ -67,13 +67,13 @@ RAPIDAPI_HOST=real-time-amazon-data.p.rapidapi.com
 
 ### 方式1：一键启动（推荐）
 
-双击运行：**`启动系统.bat`**
+双击运行：**`START.bat`**
 
 选择 **[1] 标准模式** - 启动后端API
 
 ### 方式2：快速启动
 
-双击运行：**`快速启动-后端.bat`**
+双击运行：**`START-BACKEND.bat`**
 
 ### 验证服务已启动
 
@@ -190,7 +190,8 @@ https://www.amazon.com/dp/B07ZPKN6YR
                          ↓
 ┌─────────────────────────────────────────────────────────┐
 │  第2步: 启动后端服务                                     │
-│         双击: 启动系统.bat → [1] 标准模式                │
+│         双击: START.bat → [1] 标准模式                   │
+│         或直接双击: START-BACKEND.bat                    │
 │         服务地址: http://localhost:3001                 │
 └─────────────────────────────────────────────────────────┘
                          ↓
@@ -222,7 +223,7 @@ https://www.amazon.com/dp/B07ZPKN6YR
 ### 1. 启动完整模式
 
 ```
-启动系统.bat → [2] 完整模式
+START.bat → [2] 完整模式
 ```
 
 ### 2. 访问 Web 界面
@@ -326,7 +327,7 @@ https://www.amazon.com/dp/B07ZPKN6YR
 
 ## ⛔ 停止服务
 
-双击运行：**`停止所有服务.bat`**
+双击运行：**`STOP-ALL.bat`**
 
 自动停止所有运行中的服务。
 
@@ -349,11 +350,14 @@ node scripts/health-check.js
 ### 运行测试
 
 ```bash
+# 快速测试全量分析功能（推荐）
+双击: TEST-FULL-ANALYSIS.bat
+
+# 或手动运行测试
+node tests/test-full-analysis.js
+
 # 测试 Gemini API
 node tests/test-gemini-api.js
-
-# 测试 RapidAPI
-node tests/test-rapid-api-only.js
 ```
 
 ---
@@ -362,11 +366,45 @@ node tests/test-rapid-api-only.js
 
 现在您可以：
 
-1. ✅ 双击 **`启动系统.bat`**
-2. ✅ 选择 **[1] 标准模式**
+1. ✅ 双击 **`START.bat`** 或 **`START-BACKEND.bat`**
+2. ✅ 选择 **[1] 标准模式**（如使用START.bat）
 3. ✅ 安装 **Chrome 插件**
 4. ✅ 访问 **Amazon 产品页**
 5. ✅ 点击插件 **开始分析**！
+
+### 🧪 测试功能
+
+测试全量分析功能：
+
+```bash
+# 方式1：双击运行（推荐）
+TEST-FULL-ANALYSIS.bat
+
+# 方式2：命令行运行
+node tests/test-full-analysis.js
+```
+
+**测试内容：**
+- ✅ 全量爬取评论（无数量限制）
+- ✅ 深度消费者画像分析（性别比例、人群特征、使用场景）
+- ✅ 百分比精确到小数点后2位
+
+---
+
+## 📦 可用的批处理文件
+
+项目提供 **4个核心批处理文件**：
+
+| 文件名 | 功能 | 使用场景 |
+|--------|------|----------|
+| **START.bat** | 主启动脚本（多模式选择） | 首次使用、需要Web界面 |
+| **START-BACKEND.bat** | 快速启动后端 | 日常使用Chrome插件 ⭐ |
+| **TEST-FULL-ANALYSIS.bat** | 测试全量分析功能 | 功能测试、验证配置 |
+| **STOP-ALL.bat** | 停止所有服务 | 关闭系统 |
+
+**详细说明：** 查看 [BAT-FILES-GUIDE.md](BAT-FILES-GUIDE.md)
+
+---
 
 **祝您使用愉快！** 🚀
 
