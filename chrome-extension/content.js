@@ -435,7 +435,23 @@ function renderTableModule(contentId, data, container, showProgressBar = false, 
   
   console.log(`📊 ${contentId} 数据项数:`, items.length, '显示项数:', displayItems.length)
   
-  let html = `
+  // 添加展开按钮（如果有更多数据）
+  const hasMore = items.length > 5
+  const expandBtnId = `expand-btn-${contentId.replace(/-/g, '_')}`
+  
+  let html = hasMore ? `
+    <div style="text-align:right;margin-bottom:8px;">
+      <button 
+        id="${expandBtnId}"
+        style="background:#3B82F6;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:500;box-shadow:0 2px 4px rgba(0,0,0,0.1);"
+        onmouseover="this.style.background='#2563EB';this.style.transform='translateY(-1px)'" 
+        onmouseout="this.style.background='#3B82F6';this.style.transform='translateY(0)'">
+        📋 查看全部 (${items.length}条)
+      </button>
+    </div>
+  ` : ''
+  
+  html += `
     <table class="analysis-table">
       <thead>
         <tr>
@@ -471,22 +487,22 @@ function renderTableModule(contentId, data, container, showProgressBar = false, 
     
     if (percent !== '--') {
       if (showBar) {
-        // 根据类型选择进度条颜色
-        let barColor = 'default'
+        // 根据类型选择进度条颜色 - 直接用inline style确保显示
+        let bgColor = 'linear-gradient(90deg, #3B82F6, #60A5FA)'  // 默认蓝色
         if (type === 'positive') {
-          barColor = 'positive'  // 绿色
+          bgColor = 'linear-gradient(90deg, #10B981, #34D399)'  // 绿色
         } else if (type === 'negative' || type === 'unmet') {
-          barColor = 'negative'  // 红色/橙色
+          bgColor = 'linear-gradient(90deg, #EF4444, #F87171)'  // 红色
         } else if (type === 'motivation' || type === 'scenario') {
-          barColor = 'default'   // 蓝色
+          bgColor = 'linear-gradient(90deg, #3B82F6, #60A5FA)'  // 蓝色
         }
         
         html += `
           <td class="percent-col">
             <div class="percent-with-bar">
-              <span class="percent-text">${percent}%</span>
-              <div class="progress-bar-container">
-                <div class="progress-bar-${barColor}" style="width: ${percentValue}%"></div>
+              <span class="percent-text" style="font-weight:600;color:#1F2937;">${percent}%</span>
+              <div class="progress-bar-container" style="width:100%;height:6px;background:#E5E7EB;border-radius:3px;overflow:hidden;margin-top:4px;">
+                <div style="height:100%;width:${percentValue}%;background:${bgColor};border-radius:3px;transition:width 0.3s ease;"></div>
               </div>
             </div>
           </td>
@@ -513,6 +529,142 @@ function renderTableModule(contentId, data, container, showProgressBar = false, 
   
   contentEl.innerHTML = html
   console.log(`✅ ${contentId} HTML已设置，长度:`, html.length)
+  
+  // 添加展开按钮点击事件
+  if (hasMore) {
+    const expandBtn = document.getElementById(expandBtnId)
+    if (expandBtn) {
+      expandBtn.addEventListener('click', () => {
+        showFullDataModal(contentId, items, type)
+      })
+    }
+  }
+}
+
+// 显示完整数据的模态窗口
+function showFullDataModal(contentId, items, type) {
+  // 创建模态窗口
+  const modal = document.createElement('div')
+  modal.id = `modal-${contentId}`
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+  `
+  
+  // 获取模块标题
+  const titles = {
+    'usage-scenarios-content': '使用场景',
+    'unmet-needs-content': '未被满足的需求',
+    'positive-content': '好评',
+    'negative-content': '差评',
+    'purchase-motivation-content': '购买动机'
+  }
+  const title = titles[contentId] || '详细信息'
+  
+  // 构建表格HTML
+  let tableHtml = `
+    <div style="background:white;border-radius:12px;max-width:900px;max-height:80vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:slideUp 0.3s ease;">
+      <div style="padding:20px;border-bottom:2px solid #E5E7EB;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;z-index:1;">
+        <h2 style="margin:0;color:#1F2937;font-size:20px;">📊 ${title} - 完整数据 (${items.length}条)</h2>
+        <button id="close-modal-${contentId}" style="background:#EF4444;color:white;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;line-height:32px;padding:0;" onmouseover="this.style.background='#DC2626'" onmouseout="this.style.background='#EF4444'">×</button>
+      </div>
+      <div style="padding:20px;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:#F3F4F6;">
+              <th style="padding:12px;text-align:left;border:1px solid #E5E7EB;font-weight:600;color:#374151;">序号</th>
+              <th style="padding:12px;text-align:left;border:1px solid #E5E7EB;font-weight:600;color:#374151;">描述</th>
+              <th style="padding:12px;text-align:left;border:1px solid #E5E7EB;font-weight:600;color:#374151;">占比</th>
+              <th style="padding:12px;text-align:left;border:1px solid #E5E7EB;font-weight:600;color:#374151;">原因</th>
+            </tr>
+          </thead>
+          <tbody>
+  `
+  
+  items.forEach((item, index) => {
+    const percent = item.percent || item.percentage || '--'
+    const percentValue = percent !== '--' ? parseInt(percent) : 0
+    let description = '--'
+    if (contentId === 'purchase-motivation-content') {
+      description = item.type || '--'
+    } else if (contentId === 'usage-scenarios-content') {
+      description = item.name || item.description || '--'
+    } else if (contentId === 'unmet-needs-content') {
+      description = item.need || item.description || '--'
+    } else {
+      description = item.aspect || item.desc || '--'
+    }
+    const reason = item.reason || '--'
+    
+    // 根据类型选择进度条颜色
+    let bgColor = 'linear-gradient(90deg, #3B82F6, #60A5FA)'  // 默认蓝色
+    if (type === 'positive') {
+      bgColor = 'linear-gradient(90deg, #10B981, #34D399)'  // 绿色
+    } else if (type === 'negative' || type === 'unmet') {
+      bgColor = 'linear-gradient(90deg, #EF4444, #F87171)'  // 红色
+    }
+    
+    tableHtml += `
+      <tr style="border-bottom:1px solid #E5E7EB;${index % 2 === 0 ? 'background:#F9FAFB;' : 'background:white;'}">
+        <td style="padding:12px;border:1px solid #E5E7EB;font-weight:500;color:#6B7280;">${index + 1}</td>
+        <td style="padding:12px;border:1px solid #E5E7EB;color:#1F2937;">${description}</td>
+        <td style="padding:12px;border:1px solid #E5E7EB;">
+          <div>
+            <div style="font-weight:600;color:#1F2937;margin-bottom:4px;">${percent}${percent !== '--' ? '%' : ''}</div>
+            ${percent !== '--' ? `
+              <div style="width:100%;height:6px;background:#E5E7EB;border-radius:3px;overflow:hidden;">
+                <div style="height:100%;width:${percentValue}%;background:${bgColor};border-radius:3px;"></div>
+              </div>
+            ` : ''}
+          </div>
+        </td>
+        <td style="padding:12px;border:1px solid #E5E7EB;color:#6B7280;line-height:1.6;">${reason}</td>
+      </tr>
+    `
+  })
+  
+  tableHtml += `
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `
+  
+  modal.innerHTML = tableHtml
+  document.body.appendChild(modal)
+  
+  // 添加关闭按钮事件
+  const closeBtn = document.getElementById(`close-modal-${contentId}`)
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      modal.remove()
+    })
+  }
+  
+  // 点击背景关闭
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove()
+    }
+  })
+  
+  // ESC键关闭
+  const escHandler = (e) => {
+    if (e.key === 'Escape') {
+      modal.remove()
+      document.removeEventListener('keydown', escHandler)
+    }
+  }
+  document.addEventListener('keydown', escHandler)
 }
 
 // 文本截断工具
@@ -561,10 +713,14 @@ async function pollTaskStatus(taskId, container) {
     if (response.success) {
       const { status, progress, result } = response
       
-      // 更新进度条
+      // 更新进度条 - 强制设置颜色（不依赖CSS）
       if (progressBarEl) {
         const progressValue = Math.round(progress || 0)
         progressBarEl.style.width = `${progressValue}%`
+        progressBarEl.style.background = 'linear-gradient(90deg, #10B981, #34D399)'  // 绿色渐变
+        progressBarEl.style.height = '100%'
+        progressBarEl.style.borderRadius = '3px'
+        progressBarEl.style.transition = 'width 0.3s ease'
         console.log(`📊 进度更新: ${progressValue}%, status: ${status}`)
       }
       
