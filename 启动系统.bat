@@ -141,14 +141,23 @@ exit /b 0
 :backend
 echo.
 echo ════════════════════════════════════════════════════════════════
-echo 🚀 启动后端 API 服务
+echo 🚀 启动后端 API 服务 (标准模式)
 echo ════════════════════════════════════════════════════════════════
 echo.
 echo 📋 服务信息:
 echo    - API 地址: http://localhost:3001
 echo    - 健康检查: http://localhost:3001/api/health
 echo.
-echo 💡 提示: 按 Ctrl+C 可以停止服务
+echo 📌 使用方式:
+echo    1. 保持此窗口打开（后端服务运行中）
+echo    2. 打开 Chrome 浏览器
+echo    3. 访问任意 Amazon 产品页面
+echo    4. 点击 Chrome 扩展图标
+echo    5. 开始分析评论
+echo.
+echo 💡 提示: 
+echo    - 按 Ctrl+C 可以停止服务
+echo    - 首次使用需要先安装 Chrome 扩展
 echo.
 echo ════════════════════════════════════════════════════════════════
 echo.
