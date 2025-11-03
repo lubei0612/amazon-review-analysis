@@ -124,24 +124,27 @@
 }
 
 .progress-bar-default {
-  height: 100%;
-  background: linear-gradient(90deg, #3B82F6, #60A5FA);
-  border-radius: 4px;
-  transition: width 0.3s ease;
+  height: 100% !important;
+  background: linear-gradient(90deg, #3B82F6, #60A5FA) !important;
+  border-radius: 4px !important;
+  transition: width 0.3s ease !important;
+  display: block !important;
 }
 
 .progress-bar-positive {
-  height: 100%;
-  background: linear-gradient(90deg, #10B981, #34D399);
-  border-radius: 4px;
-  transition: width 0.3s ease;
+  height: 100% !important;
+  background: linear-gradient(90deg, #10B981, #34D399) !important;
+  border-radius: 4px !important;
+  transition: width 0.3s ease !important;
+  display: block !important;
 }
 
 .progress-bar-negative {
-  height: 100%;
-  background: linear-gradient(90deg, #EF4444, #F87171);
-  border-radius: 4px;
-  transition: width 0.3s ease;
+  height: 100% !important;
+  background: linear-gradient(90deg, #EF4444, #F87171) !important;
+  border-radius: 4px !important;
+  transition: width 0.3s ease !important;
+  display: block !important;
 }
 
 
@@ -530,16 +533,26 @@
 
 /* 好评 - 绿色进度条 */
 .progress-bar-positive {
-  height: 100%;
-  background: linear-gradient(90deg, #10B981, #34D399);
-  transition: width 0.3s ease;
+  height: 100% !important;
+  background: linear-gradient(90deg, #10B981, #34D399) !important;
+  transition: width 0.3s ease !important;
+  display: block !important;
 }
 
 /* 差评 - 红色进度条 */
 .progress-bar-negative {
-  height: 100%;
-  background: linear-gradient(90deg, #EF4444, #F87171);
-  transition: width 0.3s ease;
+  height: 100% !important;
+  background: linear-gradient(90deg, #EF4444, #F87171) !important;
+  transition: width 0.3s ease !important;
+  display: block !important;
+}
+
+/* 使用场景/购买动机 - 蓝色进度条 */
+.progress-bar-default {
+  height: 100% !important;
+  background: linear-gradient(90deg, #3B82F6, #60A5FA) !important;
+  transition: width 0.3s ease !important;
+  display: block !important;
 }
 
 /* 响应式 */
