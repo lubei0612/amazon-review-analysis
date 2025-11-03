@@ -184,6 +184,9 @@ async function startAnalysis(productInfo, container) {
 function displayAnalysisResults(result, taskId, container) {
   console.log('🎨 开始渲染UI，数据结构:', result)
   
+  // ✅ 保存完整数据供模态框使用
+  fullAnalysisData = result
+  
   // 隐藏占位符和进度条
   const placeholder = container.querySelector('#analysis-placeholder')
   const progressSection = container.querySelector('#progress')
@@ -253,6 +256,10 @@ function displayAnalysisResults(result, taskId, container) {
   } else {
     console.error('❌ result 为空，无法渲染UI')
   }
+  
+  // ✅ 初始化放大按钮事件
+  initExpandButtons(container)
+  console.log('🔍 放大按钮事件已初始化')
   
   // 修改底部按钮为"查看完整报告"
   const analyzeBtn = container.querySelector('#analyze-btn')
@@ -788,6 +795,293 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true  // 保持消息通道打开
   }
 })
+
+// ========================
+// 模态框功能
+// ========================
+
+// 存储完整数据
+let fullAnalysisData = null
+
+// 打开模态框显示完整维度数据
+function openDimensionModal(moduleName, moduleTitle) {
+  const modal = document.querySelector('#dimension-modal')
+  const modalTitle = document.querySelector('#modal-title')
+  const modalBody = document.querySelector('#modal-body')
+  
+  if (!modal || !modalTitle || !modalBody || !fullAnalysisData) {
+    console.error('模态框元素或数据不存在')
+    return
+  }
+  
+  // 设置标题
+  modalTitle.textContent = moduleTitle
+  
+  // 根据模块类型渲染内容
+  let content = ''
+  
+  if (moduleName === 'consumer-profile') {
+    // 消费者画像 - 完整显示
+    const data = fullAnalysisData.consumerProfile
+    if (data) {
+      content = renderConsumerProfileModal(data)
+    }
+  } else if (moduleName === 'usage-scenarios') {
+    // 使用场景 - 完整表格
+    const data = fullAnalysisData.usageScenarios
+    if (data) {
+      content = renderTableModal(data, 'scenario')
+    }
+  } else if (moduleName === 'unmet-needs') {
+    // 未满足需求 - 完整表格
+    const data = fullAnalysisData.unmetNeeds
+    if (data) {
+      content = renderTableModal(data, 'unmet')
+    }
+  } else if (moduleName === 'positive') {
+    // 好评 - 完整表格
+    const data = fullAnalysisData.productExperience?.strengths
+    if (data) {
+      content = renderTableModal(data, 'positive')
+    }
+  } else if (moduleName === 'negative') {
+    // 差评 - 完整表格
+    const data = fullAnalysisData.productExperience?.weaknesses
+    if (data) {
+      content = renderTableModal(data, 'negative')
+    }
+  } else if (moduleName === 'purchase-motivation') {
+    // 购买动机 - 完整表格
+    const data = fullAnalysisData.purchaseMotivation
+    if (data) {
+      content = renderTableModal(data, 'motivation')
+    }
+  }
+  
+  modalBody.innerHTML = content || '<p style="text-align:center;color:#999;">暂无数据</p>'
+  
+  // 显示模态框
+  modal.style.display = 'flex'
+  
+  // 添加关闭事件
+  setupModalCloseEvents(modal)
+}
+
+// 渲染消费者画像模态框内容
+function renderConsumerProfileModal(data) {
+  let html = ''
+  
+  // 性别比例
+  const genderData = data.genderRatio || data.gender
+  if (genderData) {
+    const malePercent = genderData.male || 0
+    const femalePercent = genderData.female || 0
+    const unknownPercent = genderData.unknown || 0
+    
+    html += `
+      <div class="gender-section">
+        <div class="gender-item">
+          <svg class="gender-icon-svg" viewBox="0 0 24 24" fill="url(#maleGradient)">
+            <defs>
+              <linearGradient id="maleGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" style="stop-color:#2563EB;stop-opacity:1" />
+                <stop offset="${malePercent}%" style="stop-color:#2563EB;stop-opacity:1" />
+                <stop offset="${malePercent}%" style="stop-color:#DBEAFE;stop-opacity:0.25" />
+                <stop offset="100%" style="stop-color:#DBEAFE;stop-opacity:0.25" />
+              </linearGradient>
+            </defs>
+            <path d="M9 9c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3-3-1.3-3-3zm12-5v4h-2v-2.6l-3.2 3.2c1.1 1.2 1.7 2.8 1.7 4.4 0 3.9-3.1 7-7 7s-7-3.1-7-7 3.1-7 7-7c1.3 0 2.5.3 3.6.9L16.4 4H14V2h5c.6 0 1 .4 1 1z"/>
+          </svg>
+          <span style="font-size:24px;font-weight:600;color:#2563EB;">${malePercent}%</span>
+          <span style="font-size:12px;color:#6B7280;">男性</span>
+        </div>
+        <div class="gender-item">
+          <svg class="gender-icon-svg" viewBox="0 0 24 24" fill="url(#femaleGradient)">
+            <defs>
+              <linearGradient id="femaleGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" style="stop-color:#DB2777;stop-opacity:1" />
+                <stop offset="${femalePercent}%" style="stop-color:#DB2777;stop-opacity:1" />
+                <stop offset="${femalePercent}%" style="stop-color:#FCE7F3;stop-opacity:0.25" />
+                <stop offset="100%" style="stop-color:#FCE7F3;stop-opacity:0.25" />
+              </linearGradient>
+            </defs>
+            <path d="M17.5 9.5C17.5 6.5 15 4 12 4S6.5 6.5 6.5 9.5c0 2.7 2 5 4.5 5.4V17H9v2h2v2h2v-2h2v-2h-2v-2.1c2.5-.4 4.5-2.7 4.5-5.4zM12 13c-1.9 0-3.5-1.6-3.5-3.5S10.1 6 12 6s3.5 1.6 3.5 3.5S13.9 13 12 13z"/>
+          </svg>
+          <span style="font-size:24px;font-weight:600;color:#DB2777;">${femalePercent}%</span>
+          <span style="font-size:12px;color:#6B7280;">女性</span>
+        </div>
+        <div class="gender-item">
+          <div style="width:60px;height:60px;background:#E5E7EB;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;">❓</div>
+          <span style="font-size:24px;font-weight:600;color:#6B7280;">${unknownPercent}%</span>
+          <span style="font-size:12px;color:#6B7280;">未知</span>
+        </div>
+      </div>
+    `
+  }
+  
+  // 4个维度 - 完整显示（不限制为3条）
+  const dimensionMap = data.dimensions ? {
+    personas: { title: '人群特征', data: data.dimensions.personas || [] },
+    moments: { title: '使用时刻', data: data.dimensions.moments || [] },
+    locations: { title: '使用地点', data: data.dimensions.locations || [] },
+    behaviors: { title: '行为', data: data.dimensions.behaviors || [] }
+  } : {
+    personas: { title: '人群特征', data: data.demographics || [] },
+    moments: { title: '使用时刻', data: data.usageTime || [] },
+    locations: { title: '使用地点', data: data.usageLocation || [] },
+    behaviors: { title: '行为', data: data.behaviors || [] }
+  }
+  
+  html += `<div class="dimensions-table">`
+  
+  for (const [key, config] of Object.entries(dimensionMap)) {
+    const items = config.data
+    
+    html += `
+      <div class="dimension-column">
+        <div class="dimension-header">${config.title}</div>
+        ${items.map(item => {
+          const desc = item.persona || item.occasion || item.place || item.behavior || item.desc || item.description || '--'
+          const percent = item.percent || item.percentage || '--'
+          const reason = item.reason || '--'
+          return `
+            <div class="dimension-item">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                <span style="font-weight:600;">${desc}</span>
+                <span style="color:#3B82F6;font-weight:600;">${percent}${percent !== '--' ? '%' : ''}</span>
+              </div>
+              <div style="font-size:12px;color:#6B7280;line-height:1.5;">${reason}</div>
+            </div>
+          `
+        }).join('')}
+      </div>
+    `
+  }
+  
+  html += `</div>`
+  
+  return html
+}
+
+// 渲染表格模态框内容（使用场景、好评、差评等）
+function renderTableModal(data, type) {
+  const items = Array.isArray(data) ? data : (data?.items || [])
+  
+  if (items.length === 0) {
+    return '<p style="text-align:center;color:#999;">暂无数据</p>'
+  }
+  
+  // 根据类型选择进度条颜色
+  let bgColor = 'linear-gradient(90deg, #3B82F6, #60A5FA)'
+  if (type === 'positive') {
+    bgColor = 'linear-gradient(90deg, #10B981, #34D399)'
+  } else if (type === 'negative' || type === 'unmet') {
+    bgColor = 'linear-gradient(90deg, #EF4444, #F87171)'
+  } else if (type === 'motivation' || type === 'scenario') {
+    bgColor = 'linear-gradient(90deg, #3B82F6, #60A5FA)'
+  }
+  
+  let html = `
+    <table class="analysis-table">
+      <thead>
+        <tr>
+          <th>序号</th>
+          <th>描述</th>
+          <th>占比</th>
+          <th>原因</th>
+        </tr>
+      </thead>
+      <tbody>
+  `
+  
+  items.forEach((item, index) => {
+    let description = '--'
+    if (type === 'motivation') {
+      description = item.type || '--'
+    } else if (type === 'scenario') {
+      description = item.name || item.description || '--'
+    } else if (type === 'unmet') {
+      description = item.need || item.description || '--'
+    } else {
+      description = item.aspect || item.desc || '--'
+    }
+    
+    const percent = item.percent || item.percentage || '--'
+    const percentValue = percent !== '--' ? parseInt(percent) : 0
+    const reason = item.reason || item.reasons || '--'
+    
+    html += `
+      <tr>
+        <td style="width:60px;text-align:center;font-weight:600;color:#6B7280;">${index + 1}</td>
+        <td class="desc-col">${description}</td>
+        <td class="percent-col">
+          <div class="percent-with-bar">
+            <span class="percent-text" style="font-weight:600;color:#1F2937;">${percent}%</span>
+            <div class="progress-bar-container" style="width:100%;height:6px;background:#E5E7EB;border-radius:3px;overflow:hidden;margin-top:4px;position:relative;">
+              <div style="position:absolute;left:0;top:0;height:100%;width:${percentValue}%;background:${bgColor};border-radius:3px;transition:width 0.3s ease;z-index:1;"></div>
+            </div>
+          </div>
+        </td>
+        <td class="reason-col">${reason}</td>
+      </tr>
+    `
+  })
+  
+  html += `
+      </tbody>
+    </table>
+  `
+  
+  return html
+}
+
+// 设置模态框关闭事件
+function setupModalCloseEvents(modal) {
+  const closeBtn = modal.querySelector('#close-modal')
+  const overlay = modal.querySelector('.modal-overlay')
+  
+  // 点击关闭按钮
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      modal.style.display = 'none'
+    }
+  }
+  
+  // 点击遮罩层
+  if (overlay) {
+    overlay.onclick = () => {
+      modal.style.display = 'none'
+    }
+  }
+  
+  // ESC键关闭
+  const escHandler = (e) => {
+    if (e.key === 'Escape' && modal.style.display === 'flex') {
+      modal.style.display = 'none'
+      document.removeEventListener('keydown', escHandler)
+    }
+  }
+  document.addEventListener('keydown', escHandler)
+}
+
+// 初始化放大按钮事件
+function initExpandButtons(container) {
+  const expandBtns = container.querySelectorAll('.expand-btn')
+  
+  expandBtns.forEach(btn => {
+    btn.onclick = () => {
+      const moduleName = btn.getAttribute('data-module')
+      const moduleTitle = btn.closest('.module-header').querySelector('.module-title').textContent
+      
+      console.log(`📋 打开模态框: ${moduleName} - ${moduleTitle}`)
+      openDimensionModal(moduleName, moduleTitle)
+    }
+  })
+}
+
+// ========================
+// 页面初始化
+// ========================
 
 // 页面加载完成后自动注入UI
 if (document.readyState === 'loading') {

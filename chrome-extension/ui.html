@@ -41,8 +41,11 @@
         <!-- 第一行左：消费者画像 -->
         <div class="analysis-module consumer-profile-module" id="module-consumer-profile">
           <div class="module-header">
-            <span class="module-icon">👥</span>
-            <span class="module-title">消费者画像</span>
+            <div class="module-header-left">
+              <span class="module-icon">👥</span>
+              <span class="module-title">消费者画像</span>
+            </div>
+            <button class="expand-btn" data-module="consumer-profile" title="放大查看">🔍</button>
           </div>
           <div class="module-body" id="consumer-profile-content">
             <!-- 动态填充 -->
@@ -52,8 +55,11 @@
         <!-- 第一行右：使用场景 -->
         <div class="analysis-module" id="module-usage-scenarios">
           <div class="module-header">
-            <span class="module-icon">🎯</span>
-            <span class="module-title">使用场景</span>
+            <div class="module-header-left">
+              <span class="module-icon">🎯</span>
+              <span class="module-title">使用场景</span>
+            </div>
+            <button class="expand-btn" data-module="usage-scenarios" title="放大查看">🔍</button>
           </div>
           <div class="module-body" id="usage-scenarios-content">
             <!-- 动态填充 -->
@@ -63,8 +69,11 @@
         <!-- 第二行左：未被满足的需求 -->
         <div class="analysis-module" id="module-unmet-needs">
           <div class="module-header">
-            <span class="module-icon">💡</span>
-            <span class="module-title">未被满足的需求</span>
+            <div class="module-header-left">
+              <span class="module-icon">💡</span>
+              <span class="module-title">未被满足的需求</span>
+            </div>
+            <button class="expand-btn" data-module="unmet-needs" title="放大查看">🔍</button>
           </div>
           <div class="module-body" id="unmet-needs-content">
             <!-- 动态填充 -->
@@ -74,8 +83,11 @@
         <!-- 第二行右：好评 -->
         <div class="analysis-module" id="module-positive">
           <div class="module-header">
-            <span class="module-icon">👍</span>
-            <span class="module-title">好评</span>
+            <div class="module-header-left">
+              <span class="module-icon">👍</span>
+              <span class="module-title">好评</span>
+            </div>
+            <button class="expand-btn" data-module="positive" title="放大查看">🔍</button>
           </div>
           <div class="module-body" id="positive-content">
             <!-- 动态填充 -->
@@ -85,8 +97,11 @@
         <!-- 第三行左：差评 -->
         <div class="analysis-module" id="module-negative">
           <div class="module-header">
-            <span class="module-icon">👎</span>
-            <span class="module-title">差评</span>
+            <div class="module-header-left">
+              <span class="module-icon">👎</span>
+              <span class="module-title">差评</span>
+            </div>
+            <button class="expand-btn" data-module="negative" title="放大查看">🔍</button>
           </div>
           <div class="module-body" id="negative-content">
             <!-- 动态填充 -->
@@ -96,8 +111,11 @@
         <!-- 第三行右：购买动机 -->
         <div class="analysis-module" id="module-purchase-motivation">
           <div class="module-header">
-            <span class="module-icon">🛒</span>
-            <span class="module-title">购买动机</span>
+            <div class="module-header-left">
+              <span class="module-icon">🛒</span>
+              <span class="module-title">购买动机</span>
+            </div>
+            <button class="expand-btn" data-module="purchase-motivation" title="放大查看">🔍</button>
           </div>
           <div class="module-body" id="purchase-motivation-content">
             <!-- 动态填充 -->
@@ -124,6 +142,20 @@
       <div class="progress-bar" style="position:absolute;left:0;top:0;width:0%;height:100%;background:linear-gradient(90deg,#10B981,#34D399);border-radius:3px;transition:width 0.3s ease;z-index:1;"></div>
     </div>
     <p class="status-text" id="status">等待中...</p>
+  </div>
+  
+  <!-- 模态框：放大查看维度详情 -->
+  <div id="dimension-modal" class="dimension-modal" style="display: none;">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">维度详情</h3>
+        <button class="modal-close-btn" id="close-modal">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <!-- 动态填充完整数据 -->
+      </div>
+    </div>
   </div>
 </div>
 
