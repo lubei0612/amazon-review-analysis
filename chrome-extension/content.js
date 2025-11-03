@@ -206,10 +206,10 @@ function displayAnalysisResults(result, taskId, container) {
       console.warn('⚠️ 缺少 usageScenarios 数据')
     }
     
-    // 未被满足的需求
+    // 未被满足的需求 (添加进度条)
     if (result.unmetNeeds) {
       console.log('📊 渲染未满足需求:', result.unmetNeeds)
-      renderTableModule('unmet-needs-content', result.unmetNeeds, container)
+      renderTableModule('unmet-needs-content', result.unmetNeeds, container, true, 'unmet')
     } else {
       console.warn('⚠️ 缺少 unmetNeeds 数据')
     }
@@ -230,10 +230,10 @@ function displayAnalysisResults(result, taskId, container) {
       console.warn('⚠️ 缺少 productExperience.weaknesses 数据')
     }
     
-    // 购买动机
+    // 购买动机 (添加进度条)
     if (result.purchaseMotivation) {
       console.log('📊 渲染购买动机:', result.purchaseMotivation)
-      renderTableModule('purchase-motivation-content', result.purchaseMotivation, container)
+      renderTableModule('purchase-motivation-content', result.purchaseMotivation, container, true, 'motivation')
     } else {
       console.warn('⚠️ 缺少 purchaseMotivation 数据')
     }
@@ -455,12 +455,21 @@ function renderTableModule(contentId, data, container, showProgressBar = false, 
     }
     html += `<td class="desc-col">${truncateText(description, 10)}</td>`
     
-    // 占比列（只有好评/差评显示进度条）
-    const showBar = (type === 'positive' || type === 'negative')
+    // 占比列（好评/差评/未满足需求/购买动机都显示进度条）
+    const showBar = (type === 'positive' || type === 'negative' || type === 'unmet' || type === 'motivation')
     
     if (percent !== '--') {
       if (showBar) {
-        const barColor = type === 'positive' ? 'positive' : 'negative'
+        // 根据类型选择进度条颜色
+        let barColor = 'default'
+        if (type === 'positive') {
+          barColor = 'positive'  // 绿色
+        } else if (type === 'negative' || type === 'unmet') {
+          barColor = 'negative'  // 红色/橙色
+        } else if (type === 'motivation') {
+          barColor = 'default'   // 蓝色
+        }
+        
         html += `
           <td class="percent-col">
             <div class="percent-with-bar">

@@ -116,13 +116,26 @@ ${reviewText}
 
 **深度分析要求（必须严格遵守）：**
 
-1. **性别比例识别（genderRatio）** - ⚠️ 最重要：
-   - 男性线索：he, him, his, son, boy, dad, father, husband, boyfriend, nephew, grandson, brother
-   - 女性线索：she, her, hers, daughter, girl, mom, mother, wife, girlfriend, niece, granddaughter, sister
-   - 如无法判断性别，归入unknown
-   - ⚠️ **关键要求：male + female + unknown = 100.00（必须相加等于100）**
-   - 百分比精确到小数点后2位（如：male: 7.23, female: 31.45, unknown: 61.32）
-   - ⚠️ **示例验证：7.23 + 31.45 + 61.32 = 100.00 ✓**
+1. **性别比例识别（genderRatio）** - ⚠️ 最重要的分析维度：
+   
+   **识别线索（必须仔细分析每条评论）：**
+   - 男性线索：he, him, his, son, boy, dad, father, husband, boyfriend, nephew, grandson, brother, man, male, gentleman
+   - 女性线索：she, her, hers, daughter, girl, mom, mother, wife, girlfriend, niece, granddaughter, sister, woman, female, lady
+   - 购买者角色推测：
+     * 为儿子/女儿购买 → 可推测购买者是父母
+     * 送给丈夫/妻子 → 可推测购买者性别
+     * 礼物相关 → 注意"送给他/她"等表述
+   
+   **⚠️ 关键要求：**
+   - male + female + unknown = 100.00（必须严格相加等于100）
+   - 百分比精确到小数点后2位（如：male: 35.00, female: 42.00, unknown: 23.00）
+   - ⚠️ **验证公式：35.00 + 42.00 + 23.00 = 100.00 ✓**
+   - ⚠️ **最小识别率要求：male + female 应该 ≥ 20%**（至少要识别出20%的性别）
+   
+   **分析策略：**
+   1. 先统计所有评论中明确的性别线索词出现次数
+   2. 再统计隐含的性别信息（如"我给我儿子买的"）
+   3. 最后计算比例，确保三者之和=100.00
    
 2. **人群特征（demographics）**：
    - 识别年龄/人群：baby（婴儿0-1岁）, toddler（幼儿1-3岁）, kid/child（儿童3-12岁）, teen（青少年13-18岁）, adult（成人18+）, pregnant（孕妇）, elderly（老年人）
