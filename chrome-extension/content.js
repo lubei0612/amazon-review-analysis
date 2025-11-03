@@ -201,7 +201,7 @@ function displayAnalysisResults(result, taskId, container) {
     // 使用场景
     if (result.usageScenarios) {
       console.log('📊 渲染使用场景:', result.usageScenarios)
-      renderTableModule('usage-scenarios-content', result.usageScenarios, container)
+      renderTableModule('usage-scenarios-content', result.usageScenarios, container, true, 'scenario')  // ✅ 添加进度条
     } else {
       console.warn('⚠️ 缺少 usageScenarios 数据')
     }
@@ -455,8 +455,8 @@ function renderTableModule(contentId, data, container, showProgressBar = false, 
     }
     html += `<td class="desc-col">${truncateText(description, 10)}</td>`
     
-    // 占比列（好评/差评/未满足需求/购买动机都显示进度条）
-    const showBar = (type === 'positive' || type === 'negative' || type === 'unmet' || type === 'motivation')
+    // 占比列（所有模块都显示进度条）
+    const showBar = (type === 'positive' || type === 'negative' || type === 'unmet' || type === 'motivation' || type === 'scenario')
     
     if (percent !== '--') {
       if (showBar) {
@@ -466,7 +466,7 @@ function renderTableModule(contentId, data, container, showProgressBar = false, 
           barColor = 'positive'  // 绿色
         } else if (type === 'negative' || type === 'unmet') {
           barColor = 'negative'  // 红色/橙色
-        } else if (type === 'motivation') {
+        } else if (type === 'motivation' || type === 'scenario') {
           barColor = 'default'   // 蓝色
         }
         

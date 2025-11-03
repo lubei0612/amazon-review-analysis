@@ -104,14 +104,15 @@
 /* ====== 进度条样式 ====== */
 .percent-with-bar {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;  /* 改为垂直布局，百分比在上，进度条在下 */
+  gap: 4px;
+  width: 100%;
 }
 
 .percent-text {
-  min-width: 40px;
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
+  color: #1F2937;
+  font-size: 14px;
 }
 
 .progress-bar-container {
@@ -297,25 +298,27 @@
 
 .progress-bar-container {
   width: 100% !important;
-  height: 6px !important;
+  height: 8px !important; /* 加粗到8px更明显 */
   background: #E5E7EB !important;
-  border-radius: 3px;
+  border-radius: 4px !important;
   overflow: hidden !important;
   margin-bottom: 8px;
   position: relative !important;
   box-sizing: border-box !important;
+  border: 1px solid #D1D5DB !important; /* 添加边框，更明显 */
 }
 
 .progress-bar {
   height: 100% !important;
   width: 0% !important; /* 初始宽度0%，由JS动态设置 */
   background: linear-gradient(90deg, #10B981, #34D399) !important;
-  transition: width 0.3s ease !important;
-  border-radius: 3px;
-  position: relative !important; /* 改为relative，不使用absolute定位 */
+  transition: width 0.4s ease-in-out !important;
+  border-radius: 3px !important;
+  position: relative !important;
   box-sizing: border-box !important;
-  will-change: width;
+  will-change: width !important;
   display: block !important;
+  min-width: 1px !important; /* 确保至少有1px可见 */
 }
 
 .status-text {
@@ -506,14 +509,15 @@
 /* ====== 好评/差评进度条（在百分比右边） ====== */
 .percent-with-bar {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;  /* 改为垂直布局，避免错位 */
+  gap: 4px;
+  width: 100%;
 }
 
 .percent-text {
   font-weight: 600;
   color: #1F2937;
-  min-width: 35px;
+  font-size: 14px;
 }
 
 .progress-bar-container-inline {

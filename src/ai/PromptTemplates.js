@@ -118,24 +118,47 @@ ${reviewText}
 
 1. **性别比例识别（genderRatio）** - ⚠️ 最重要的分析维度：
    
-   **识别线索（必须仔细分析每条评论）：**
-   - 男性线索：he, him, his, son, boy, dad, father, husband, boyfriend, nephew, grandson, brother, man, male, gentleman
-   - 女性线索：she, her, hers, daughter, girl, mom, mother, wife, girlfriend, niece, granddaughter, sister, woman, female, lady
-   - 购买者角色推测：
-     * 为儿子/女儿购买 → 可推测购买者是父母
-     * 送给丈夫/妻子 → 可推测购买者性别
-     * 礼物相关 → 注意"送给他/她"等表述
+   **🎯 多层次识别策略（按优先级从高到低）：**
    
-   **⚠️ 关键要求：**
-   - male + female + unknown = 100.00（必须严格相加等于100）
+   **第一层：直接性别线索词（最可靠，权重100%）**
+   - 男性：he, him, his, son, boy, dad, father, husband, boyfriend, nephew, grandson, brother, man, male, gentleman, Mr., male customer
+   - 女性：she, her, hers, daughter, girl, mom, mother, wife, girlfriend, niece, granddaughter, sister, woman, female, lady, Mrs., Ms., female customer
+   
+   **第二层：评论者姓名判断（可靠，权重90%）**
+   - 常见男性名：John, Michael, David, James, Robert, William, Richard, Thomas, Mark, Daniel, etc.
+   - 常见女性名：Mary, Jennifer, Linda, Patricia, Susan, Jessica, Sarah, Karen, Lisa, Nancy, Emily, etc.
+   - 注意：如果姓名无法判断性别，归为unknown
+   
+   **第三层：购买关系推测（中等可靠，权重70%）**
+   - "bought for my husband/boyfriend/dad/son" → 购买者可能是女性
+   - "bought for my wife/girlfriend/mom/daughter" → 购买者可能是男性
+   - "gift for him" → 购买者可能是女性
+   - "gift for her" → 购买者可能是男性
+   - "my husband loves it" → 评论者可能是女性
+   - "my wife loves it" → 评论者可能是男性
+   
+   **第四层：产品类型推测（低可靠，权重40%，谨慎使用）**
+   - 如果产品是女性专用（如女装、化妆品、女性护理用品）→ 推测女性比例更高（但不绝对，可能是男性送礼）
+   - 如果产品是男性专用（如男装、男性美容用品、男性工具）→ 推测男性比例更高
+   - 如果是中性产品（如电子产品、家居用品）→ 不做性别推测
+   
+   **第五层：语气和表达方式（最不可靠，权重20%，仅供参考）**
+   - 细腻、情感化的表达可能偏向女性（但不绝对）
+   - 简洁、技术化的表达可能偏向男性（但不绝对）
+   
+   **⚠️ 关键计算要求：**
+   - male + female + unknown = 100.00（必须严格相加等于100，这是铁律！）
    - 百分比精确到小数点后2位（如：male: 35.00, female: 42.00, unknown: 23.00）
    - ⚠️ **验证公式：35.00 + 42.00 + 23.00 = 100.00 ✓**
-   - ⚠️ **最小识别率要求：male + female 应该 ≥ 20%**（至少要识别出20%的性别）
+   - 🎯 **目标识别率：male + female 尽量 ≥ 30%**（Shulex标准是20%，我们尝试做到30%+）
+   - 如果识别率低于30%，说明评论中性别信息确实很少，这是正常的（如Shulex也有12%+8%=20%的情况）
    
-   **分析策略：**
-   1. 先统计所有评论中明确的性别线索词出现次数
-   2. 再统计隐含的性别信息（如"我给我儿子买的"）
-   3. 最后计算比例，确保三者之和=100.00
+   **分析流程：**
+   1. 逐条分析每条评论，应用上述5层策略
+   2. 对每条评论标记：男性(M)、女性(F)、不确定(U)
+   3. 统计：M条评论、F条评论、U条评论
+   4. 计算比例：male = M/总评论数×100.00, female = F/总评论数×100.00, unknown = 100.00 - male - female
+   5. **最后验证：male + female + unknown = 100.00**（如果不等于100.00，调整unknown使其相等）
    
 2. **人群特征（demographics）**：
    - 识别年龄/人群：baby（婴儿0-1岁）, toddler（幼儿1-3岁）, kid/child（儿童3-12岁）, teen（青少年13-18岁）, adult（成人18+）, pregnant（孕妇）, elderly（老年人）
@@ -150,9 +173,22 @@ ${reviewText}
    - 返回TOP 3-5项，百分比精确到小数点后2位
 
 4. **使用地点（usageLocation）**：
-   - 家庭场景：home, house, bedroom, living room, nursery
-   - 户外场所：park, beach, outdoor, playground
-   - 公共场所：church, school, party venue, restaurant
+   
+   **🎯 推测策略（优先级从高到低）：**
+   - **明确提及**：如果评论中明确提到地点（如"在家用"、"公园里"、"学校"），直接识别
+   - **场景推测**：根据使用场景推测地点
+     * 睡觉、做饭、看电视 → 家庭/家中
+     * 聚会、庆祝、拍照 → 派对会场/家庭聚会
+     * 运动、玩耍、散步 → 户外/公园
+     * 学习、上课 → 学校/图书馆
+   - **产品类型推测**：根据产品特性推测常见使用地点
+     * 家居用品 → 家中
+     * 户外装备 → 户外/公园
+     * 派对用品 → 派对会场/家庭聚会
+   
+   **⚠️ 重要：**
+   - 如果评论中确实没有任何地点信息，且无法合理推测，可以返回"数据不足"
+   - 但应尽量尝试推测，至少返回1-2个常见地点
    - 返回TOP 3-5项，百分比精确到小数点后2位
 
 5. **行为特征（behaviors）**：
