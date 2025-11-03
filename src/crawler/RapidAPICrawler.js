@@ -32,21 +32,20 @@ class RapidAPICrawler {
   }
   
   /**
-   * 获取产品评论
+   * 获取产品评论（全量模式）
    * @param {string} asin - Amazon ASIN
-   * @param {number} maxReviews - 最大评论数（默认500）
+   * @param {number} maxReviews - 最大评论数（默认Infinity表示全量）
    * @param {function} onProgress - 进度回调
    */
-  async getReviews(asin, maxReviews = 500, onProgress = null) {
+  async getReviews(asin, maxReviews = Infinity, onProgress = null) {
     if (!this.isAvailable()) {
       throw new Error('RapidAPI未配置，请在.env中设置RAPIDAPI_KEY')
     }
     
     const allReviews = []
-    const reviewsPerPage = 10 // RapidAPI每页约10条评论
-    const maxPages = Math.ceil(maxReviews / reviewsPerPage)
+    const maxPages = maxReviews === Infinity ? 100 : Math.ceil(maxReviews / 10) // 最多100页
     
-    logger.info(`🚀 开始使用RapidAPI爬取 ASIN: ${asin}，目标: ${maxReviews}条评论`)
+    logger.info(`🚀 开始使用RapidAPI爬取 ASIN: ${asin}，目标: ${maxReviews === Infinity ? '全量' : maxReviews + '条'}评论`)
     
     for (let page = 1; page <= maxPages; page++) {
       try {
@@ -83,20 +82,22 @@ class RapidAPICrawler {
         allReviews.push(...reviews)
         
         // ✅ 进度回调
-        const progress = Math.min(100, Math.round((allReviews.length / maxReviews) * 100))
+        const progress = maxReviews === Infinity ? 0 : Math.min(100, Math.round((allReviews.length / maxReviews) * 100))
         if (onProgress) {
           onProgress({
             current: allReviews.length,
-            total: maxReviews,
+            total: maxReviews === Infinity ? '未知' : maxReviews,
             progress: progress,
-            message: `已爬取 ${allReviews.length}/${maxReviews} 条评论（RapidAPI快速模式）`
+            page: page,
+            source: 'RapidAPI',
+            message: `已爬取 ${allReviews.length} 条评论（第${page}页）`
           })
         }
         
         logger.info(`✓ 第 ${page} 页爬取成功，累计 ${allReviews.length} 条评论`)
         
         // 达到目标或没有更多评论
-        if (allReviews.length >= maxReviews) {
+        if (maxReviews !== Infinity && allReviews.length >= maxReviews) {
           logger.info(`✓ 已达到目标评论数: ${allReviews.length}`)
           break
         }

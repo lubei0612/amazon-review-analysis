@@ -24,50 +24,141 @@ class PromptTemplates {
   }
 
   /**
-   * 1. 消费者画像分析
+   * 1. 消费者画像分析（深度版本）
    */
   static getConsumerProfilePrompt(reviews) {
-    const reviewText = reviews.slice(0, 100).map(r => 
-      `评分:${r.rating}星 | ${r.title} | ${r.content}`
+    const reviewText = reviews.slice(0, 200).map((r, i) => 
+      `[${i+1}] 评分:${r.rating}星 | 作者:${r.author?.name || '匿名'} | ${r.title} | ${r.content}`
     ).join('\n')
 
-    return `分析以下Amazon产品评论，提取消费者画像信息。
+    return `你是一位专业的消费者行为分析师。请基于以下Amazon产品评论，进行深度的消费者画像分析。
 
-评论数据（共${reviews.length}条，显示前100条）：
+评论数据（共${reviews.length}条，分析前200条）：
 ${reviewText}
 
-请分析并返回JSON格式（每个维度返回前3条）：
+请严格按照以下JSON格式返回分析结果：
+
 {
-  "dimensions": {
-    "personas": [
-      {"desc": "父母", "percentage": 7, "reason": "评论中频繁提到为孩子购买，家长是主要购买群体"},
-      {"desc": "孩子", "percentage": 5, "reason": "多次提到儿童使用场景"},
-      {"desc": "老年人", "percentage": 3, "reason": "部分评论提到老人使用"}
-    ],
-    "moments": [
-      {"desc": "每日", "percentage": 8, "reason": "用户表示日常生活中经常使用"},
-      {"desc": "膳食准备", "percentage": 7, "reason": "多在准备正餐或零食时使用"},
-      {"desc": "零食时间", "percentage": 4, "reason": "下午茶或休闲时刻使用"}
-    ],
-    "locations": [
-      {"desc": "家", "percentage": 13, "reason": "大多数用户在家庭环境中使用"},
-      {"desc": "厨房", "percentage": 10, "reason": "厨房是主要使用场景"},
-      {"desc": "学校", "percentage": 3, "reason": "部分家长为孩子准备午餐盒"}
-    ],
-    "behaviors": [
-      {"desc": "切片", "percentage": 23, "reason": "核心功能就是切片，使用频率最高"},
-      {"desc": "取芯", "percentage": 5, "reason": "去除果核功能也被频繁提及"},
-      {"desc": "准备零食", "percentage": 5, "reason": "为孩子准备健康零食"}
-    ]
-  }
+  "genderRatio": {
+    "male": 7.23,
+    "female": 31.45,
+    "unknown": 61.32
+  },
+  "demographics": [
+    {
+      "persona": "婴儿父母",
+      "percentage": 24.15,
+      "reason": "许多评论提到为0-1岁婴儿购买，是最大的消费群体"
+    },
+    {
+      "persona": "幼儿父母",
+      "percentage": 14.50,
+      "reason": "评论中频繁提及1-3岁幼儿使用场景"
+    },
+    {
+      "persona": "孕妇/准妈妈",
+      "percentage": 10.20,
+      "reason": "部分评论提到为即将出生的宝宝准备"
+    }
+  ],
+  "usageTime": [
+    {
+      "occasion": "生日派对",
+      "percentage": 26.00,
+      "reason": "许多评论提到在生日派对等特殊场合使用，强调了它适合此类活动"
+    },
+    {
+      "occasion": "复活节",
+      "percentage": 14.00,
+      "reason": "一些评论指出这件衣服是在复活节庆祝活动中穿的，并指出了它的季节性"
+    },
+    {
+      "occasion": "日常使用",
+      "percentage": 12.00,
+      "reason": "部分用户表示日常生活中经常使用"
+    }
+  ],
+  "usageLocation": [
+    {
+      "place": "家庭聚会",
+      "percentage": 20.00,
+      "reason": "评论中经常提到在家庭聚会场合使用"
+    },
+    {
+      "place": "户外活动",
+      "percentage": 15.00,
+      "reason": "用户提到在公园等户外场所使用"
+    },
+    {
+      "place": "派对会场",
+      "percentage": 10.00,
+      "reason": "多次提到在派对等社交场合使用"
+    }
+  ],
+  "behaviors": [
+    {
+      "behavior": "送礼",
+      "percentage": 16.00,
+      "reason": "许多评论提到购买这件衣服作为礼物送给新父母或孩子的礼物"
+    },
+    {
+      "behavior": "拍照留念",
+      "percentage": 10.00,
+      "reason": "多个评论提到这件衣服非常适合拍照"
+    },
+    {
+      "behavior": "等待特殊活动",
+      "percentage": 9.00,
+      "reason": "用户购买后等待特定场合再使用"
+    }
+  ]
 }
 
-关键要求：
-1. 【必须中文输出】所有字段必须使用中文
-2. 【字段名】desc必须是3-10字符的中文短标题（如"父母"、"孩子"、"每日"、"家"、"切片"）
-3. 【百分比说明】percentage是该项在评论中的实际提及占比（4个维度独立计算，不要求加起来等于100%）
-4. reason是你的中文分析原因（1-2句话）
-5. 每个维度只返回前3条最重要的`
+**深度分析要求：**
+
+1. **性别比例识别（genderRatio）**：
+   - 男性线索：he, him, his, son, boy, dad, father, husband, boyfriend, nephew, grandson, brother
+   - 女性线索：she, her, hers, daughter, girl, mom, mother, wife, girlfriend, niece, granddaughter, sister
+   - 如无法判断性别，归入unknown
+   - 百分比精确到小数点后2位，三者之和必须为100.00
+   
+2. **人群特征（demographics）**：
+   - 识别年龄/人群：baby（婴儿0-1岁）, toddler（幼儿1-3岁）, kid/child（儿童3-12岁）, teen（青少年13-18岁）, adult（成人18+）, pregnant（孕妇）, elderly（老年人）
+   - 识别角色：parents（父母）, grandparents（祖父母）, teacher（老师）, nurse（护士）等
+   - 返回TOP 3-5项，百分比精确到小数点后2位
+   - 每项附带详细原因说明（50-100字）
+
+3. **使用时刻（usageTime）**：
+   - 特殊节日：birthday, Christmas, Easter, Halloween, Thanksgiving, Valentine's Day
+   - 人生大事：wedding, baby shower, graduation, baptism, christening
+   - 日常场景：daily, everyday, weekend, vacation, holiday
+   - 返回TOP 3-5项，百分比精确到小数点后2位
+
+4. **使用地点（usageLocation）**：
+   - 家庭场景：home, house, bedroom, living room, nursery
+   - 户外场所：park, beach, outdoor, playground
+   - 公共场所：church, school, party venue, restaurant
+   - 返回TOP 3-5项，百分比精确到小数点后2位
+
+5. **行为特征（behaviors）**：
+   - 购买行为：gift（送礼）, collect（收藏）, replace（替换）
+   - 使用行为：photoshoot（拍照）, display（展示）, wear daily（日常穿着）
+   - 返回TOP 3-5项，百分比精确到小数点后2位
+
+**百分比计算说明：**
+- genderRatio：三者之和=100.00
+- demographics, usageTime, usageLocation, behaviors：各自独立计算，不要求加总100%
+- 计算方式：(该项提及次数 / 该维度总提及次数) × 100
+- 精确到小数点后2位（如：24.15, 14.50）
+
+**输出格式要求：**
+- 必须返回有效的JSON格式
+- 所有字段必须用中文（persona, occasion, place, behavior, reason）
+- 百分比是纯数字，不要加%符号
+- reason说明要具体，引用评论关键词
+- 如果某个维度信息不足，可以标注"数据不足，无法准确分析"
+
+请仔细分析评论内容，提取真实的消费者画像特征。`
   }
 
   /**
