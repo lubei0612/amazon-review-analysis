@@ -79,15 +79,15 @@ echo ═════════════════════════
 echo.
 echo 🎯 启动模式选择:
 echo.
-echo    [1] 完整模式 - 启动后端 + Web前端
-echo    [2] 仅后端   - 只启动后端API服务
-echo    [3] 仅前端   - 只启动Web界面
+echo    [1] 标准模式 - 启动后端API（推荐，配合Chrome插件使用）
+echo    [2] 完整模式 - 启动后端 + Web前端（开发/演示用）
+echo    [3] 仅前端   - 只启动Web界面（需要后端已运行）
 echo    [4] 退出
 echo.
 set /p choice="请选择 (1-4): "
 
-if "%choice%"=="1" goto full
-if "%choice%"=="2" goto backend
+if "%choice%"=="1" goto backend
+if "%choice%"=="2" goto full
 if "%choice%"=="3" goto frontend
 if "%choice%"=="4" goto end
 echo ❌ 无效选择，请重新运行
