@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>进度条CSS验证工具</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #F9FAFB;
+    }
+    
+    h1 {
+      color: #111827;
+      border-bottom: 3px solid #3B82F6;
+      padding-bottom: 10px;
+    }
+    
+    .section {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .section h2 {
+      color: #1F2937;
+      margin-top: 0;
+    }
+    
+    .test-item {
+      margin: 20px 0;
+      padding: 15px;
+      background: #F3F4F6;
+      border-radius: 6px;
+    }
+    
+    .label {
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+    
+    .progress-bar-container {
+      width: 100% !important;
+      height: 8px !important;
+      background: #E5E7EB !important;
+      border-radius: 4px !important;
+      overflow: hidden !important;
+      margin-bottom: 8px;
+      position: relative !important;
+      box-sizing: border-box !important;
+      border: 1px solid #D1D5DB !important;
+    }
+    
+    .progress-bar {
+      height: 100% !important;
+      transition: width 0.4s ease-in-out !important;
+      border-radius: 3px !important;
+      position: relative !important;
+      box-sizing: border-box !important;
+      display: block !important;
+      min-width: 1px !important;
+    }
+    
+    .progress-bar-default {
+      height: 100% !important;
+      background: linear-gradient(90deg, #3B82F6, #60A5FA) !important;
+      border-radius: 4px !important;
+      transition: width 0.3s ease !important;
+      display: block !important;
+    }
+    
+    .progress-bar-positive {
+      height: 100% !important;
+      background: linear-gradient(90deg, #10B981, #34D399) !important;
+      border-radius: 4px !important;
+      transition: width 0.3s ease !important;
+      display: block !important;
+    }
+    
+    .progress-bar-negative {
+      height: 100% !important;
+      background: linear-gradient(90deg, #EF4444, #F87171) !important;
+      border-radius: 4px !important;
+      transition: width 0.3s ease !important;
+      display: block !important;
+    }
+    
+    .status {
+      margin-top: 10px;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    
+    .status.success {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+    
+    .status.error {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+    
+    button {
+      background: #3B82F6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      margin: 5px;
+    }
+    
+    button:hover {
+      background: #2563EB;
+    }
+    
+    .code {
+      background: #1F2937;
+      color: #F9FAFB;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎨 进度条CSS验证工具</h1>
+  
+  <div class="section">
+    <h2>📌 使用说明</h2>
+    <p>这个页面模拟了Chrome扩展中的进度条样式。如果这里的进度条有颜色，说明CSS代码是正确的。</p>
+    <p><strong>如果扩展中没有颜色，说明扩展没有正确重新加载。</strong></p>
+  </div>
+  
+  <div class="section">
+    <h2>1️⃣ 主进度条（绿色）</h2>
+    <div class="test-item">
+      <div class="label">应该是绿色渐变 (#10B981 → #34D399)</div>
+      <div class="progress-bar-container">
+        <div class="progress-bar progress-bar-positive" id="main-progress" style="width: 0%;"></div>
+      </div>
+      <button onclick="animateProgress('main-progress', 75)">测试动画到75%</button>
+      <button onclick="animateProgress('main-progress', 0)">重置</button>
+      <div id="main-status" class="status success" style="display:none;">✅ 主进度条颜色正常</div>
+    </div>
+  </div>
+  
+  <div class="section">
+    <h2>2️⃣ 使用场景/购买动机（蓝色）</h2>
+    <div class="test-item">
+      <div class="label">应该是蓝色渐变 (#3B82F6 → #60A5FA)</div>
+      <div class="progress-bar-container">
+        <div class="progress-bar progress-bar-default" id="scenario-progress" style="width: 0%;"></div>
+      </div>
+      <button onclick="animateProgress('scenario-progress', 50)">测试动画到50%</button>
+      <button onclick="animateProgress('scenario-progress', 0)">重置</button>
+      <div id="scenario-status" class="status success" style="display:none;">✅ 蓝色进度条正常</div>
+    </div>
+  </div>
+  
+  <div class="section">
+    <h2>3️⃣ 好评（绿色）</h2>
+    <div class="test-item">
+      <div class="label">应该是绿色渐变 (#10B981 → #34D399)</div>
+      <div class="progress-bar-container">
+        <div class="progress-bar progress-bar-positive" id="positive-progress" style="width: 0%;"></div>
+      </div>
+      <button onclick="animateProgress('positive-progress', 29)">测试动画到29%</button>
+      <button onclick="animateProgress('positive-progress', 0)">重置</button>
+      <div id="positive-status" class="status success" style="display:none;">✅ 好评进度条正常</div>
+    </div>
+  </div>
+  
+  <div class="section">
+    <h2>4️⃣ 差评/未满足需求（红色）</h2>
+    <div class="test-item">
+      <div class="label">应该是红色渐变 (#EF4444 → #F87171)</div>
+      <div class="progress-bar-container">
+        <div class="progress-bar progress-bar-negative" id="negative-progress" style="width: 0%;"></div>
+      </div>
+      <button onclick="animateProgress('negative-progress', 24)">测试动画到24%</button>
+      <button onclick="animateProgress('negative-progress', 0)">重置</button>
+      <div id="negative-status" class="status success" style="display:none;">✅ 差评进度条正常</div>
+    </div>
+  </div>
+  
+  <div class="section">
+    <h2>🔧 如何重新加载Chrome扩展</h2>
+    <div class="code">
+步骤1: 打开扩展管理页面
+       chrome://extensions/
+
+步骤2: 找到 "Amazon Review Analysis" 扩展
+       确保右上角"开发者模式"是打开的
+
+步骤3: 点击扩展卡片右下角的 🔄 "重新加载" 按钮
+
+步骤4: 关闭所有Amazon标签页，重新打开
+
+步骤5: 点击扩展图标，开始分析
+    </div>
+  </div>
+  
+  <div class="section">
+    <h2>📋 验证清单</h2>
+    <label><input type="checkbox"> 1. 这个测试页面的进度条都有颜色</label><br>
+    <label><input type="checkbox"> 2. 后端已重启（日志显示"全量（无限制）"）</label><br>
+    <label><input type="checkbox"> 3. Chrome扩展已重新加载（在chrome://extensions/）</label><br>
+    <label><input type="checkbox"> 4. Amazon页面已刷新</label><br>
+    <label><input type="checkbox"> 5. 扩展中的进度条有颜色了</label><br>
+  </div>
+  
+  <div class="section">
+    <h2>❓ 如果还是没有颜色</h2>
+    <ol>
+      <li><strong>清空浏览器缓存</strong>
+        <ul>
+          <li>打开开发者工具（F12）</li>
+          <li>右键点击刷新按钮</li>
+          <li>选择"清空缓存并硬性重新加载"</li>
+        </ul>
+      </li>
+      <li><strong>检查CSS文件路径</strong>
+        <ul>
+          <li>在chrome://extensions/中，点击扩展的"详细信息"</li>
+          <li>找到"检查视图"下的"background page"或"service worker"</li>
+          <li>在Console中输入: <code>chrome.runtime.getURL('ui.css')</code></li>
+          <li>确认文件路径存在</li>
+        </ul>
+      </li>
+      <li><strong>重新安装扩展</strong>
+        <ul>
+          <li>在chrome://extensions/中，点击"移除"</li>
+          <li>点击"加载已解压的扩展程序"</li>
+          <li>选择 <code>chrome-extension</code> 文件夹</li>
+        </ul>
+      </li>
+    </ol>
+  </div>
+  
+  <script>
+    function animateProgress(id, targetPercent) {
+      const el = document.getElementById(id);
+      const statusEl = document.getElementById(id.replace('-progress', '-status'));
+      
+      // 重置
+      el.style.width = '0%';
+      
+      // 动画到目标百分比
+      setTimeout(() => {
+        el.style.width = targetPercent + '%';
+        if (statusEl) {
+          statusEl.style.display = 'block';
+          setTimeout(() => {
+            statusEl.style.display = 'none';
+          }, 2000);
+        }
+      }, 100);
+    }
+    
+    // 页面加载时自动测试
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        animateProgress('main-progress', 75);
+      }, 500);
+      setTimeout(() => {
+        animateProgress('scenario-progress', 50);
+      }, 1000);
+      setTimeout(() => {
+        animateProgress('positive-progress', 29);
+      }, 1500);
+      setTimeout(() => {
+        animateProgress('negative-progress', 24);
+      }, 2000);
+    });
+  </script>
+</body>
+</html>
+
