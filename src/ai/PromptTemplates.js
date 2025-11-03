@@ -114,13 +114,15 @@ ${reviewText}
   ]
 }
 
-**深度分析要求：**
+**深度分析要求（必须严格遵守）：**
 
-1. **性别比例识别（genderRatio）**：
+1. **性别比例识别（genderRatio）** - ⚠️ 最重要：
    - 男性线索：he, him, his, son, boy, dad, father, husband, boyfriend, nephew, grandson, brother
    - 女性线索：she, her, hers, daughter, girl, mom, mother, wife, girlfriend, niece, granddaughter, sister
    - 如无法判断性别，归入unknown
-   - 百分比精确到小数点后2位，三者之和必须为100.00
+   - ⚠️ **关键要求：male + female + unknown = 100.00（必须相加等于100）**
+   - 百分比精确到小数点后2位（如：male: 7.23, female: 31.45, unknown: 61.32）
+   - ⚠️ **示例验证：7.23 + 31.45 + 61.32 = 100.00 ✓**
    
 2. **人群特征（demographics）**：
    - 识别年龄/人群：baby（婴儿0-1岁）, toddler（幼儿1-3岁）, kid/child（儿童3-12岁）, teen（青少年13-18岁）, adult（成人18+）, pregnant（孕妇）, elderly（老年人）
@@ -165,13 +167,15 @@ ${reviewText}
    * 2. 使用场景分析
    */
   static getUsageScenariosPrompt(reviews) {
-    const reviewText = reviews.slice(0, 100).map(r => 
-      `${r.title} | ${r.content}`
+    const reviewText = reviews.slice(0, 100).map((r, i) => 
+      `[${i+1}] ${r.rating}星 | ${r.title} | ${r.content}`
     ).join('\n')
 
-    return `分析以下评论，提取产品使用场景（只返回前5条）。
+    return `你是一位专业的产品使用场景分析师。请基于以下${reviews.length}条Amazon产品评论，深度分析用户的使用场景。
 
-评论数据（共${reviews.length}条）：
+⚠️ 重要：即使评论中没有明确提到使用场景，也要根据产品特性、用户评价内容、购买动机等推理出合理的使用场景。必须返回至少3-5个场景。
+
+评论数据（共${reviews.length}条，分析前100条）：
 ${reviewText}
 
 返回JSON格式（直接返回数组，不需要scenarios包装）：
@@ -216,7 +220,10 @@ ${reviewText}
    - 注意：只返回前5个最重要的场景，但百分比是相对于所有发现的场景计算的
    - 因此前5个的百分比加起来通常在60-80%，剩余的20-40%在其他未返回的场景中
 4. description是场景的简短中文描述
-5. reason是你的深度中文分析（为什么用户在这个场景使用）`
+5. reason是你的深度中文分析（为什么用户在这个场景使用）
+
+⚠️ **必须返回至少3个使用场景，不允许返回空数组[]！**
+即使评论中没有明确提及，也要根据产品类型和用户评价推理合理的使用场景。`
   }
 
   /**

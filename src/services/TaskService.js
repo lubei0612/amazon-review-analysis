@@ -84,11 +84,16 @@ class TaskService {
         maxReviews: targetCount,
         onProgress: (crawlProgress) => {
           // 爬取进度：0%-50%
-          // crawlProgress.progress 已经是 1-99 的整数
-          const actualProgress = Math.min(Math.round((crawlProgress.progress || 0) * 0.5), 50)
-          logger.info(`📊 爬取进度回调: ${crawlProgress.progress}% → 转换为总进度: ${actualProgress}%`)
+          const crawlPercent = crawlProgress.progress || 0
+          const actualProgress = Math.min(Math.round(crawlPercent * 0.5), 50)
+          
+          // ✅ 关键修复：确保至少有1%的进度显示
+          const displayProgress = actualProgress > 0 ? actualProgress : (crawlPercent > 0 ? 1 : 0)
+          
+          logger.info(`📊 爬取进度: 第${crawlProgress.page}页 | 原始${crawlPercent}% → 总进度${displayProgress}%`)
+          
           this.updateTask(taskId, { 
-            progress: actualProgress
+            progress: displayProgress
           })
         },
         domain: 'amazon.com'
