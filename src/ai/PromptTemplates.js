@@ -246,7 +246,15 @@ ${reviewText}
 - 所有字段必须用中文（persona, occasion, place, behavior, reason）
 - 百分比是纯数字，不要加%符号
 - reason说明要具体，引用评论关键词
-- 如果某个维度信息不足，可以标注"数据不足，无法准确分析"
+
+**⚠️ 最终检查（必须通过）：**
+1. ✅ genderRatio: male + female + unknown = 100.00
+2. ✅ demographics: 至少3个persona，每个有percentage和reason
+3. ✅ usageTime: 至少3个occasion，每个有percentage和reason
+4. ✅ **usageLocation: 必须至少3个place，不允许为空数组或"数据不足"**
+5. ✅ behaviors: 至少3个behavior，每个有percentage和reason
+
+**如果usageLocation为空或返回"数据不足"，系统会报错！请务必返回真实数据！**
 
 请仔细分析评论内容，提取真实的消费者画像特征。`
   }

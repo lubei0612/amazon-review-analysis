@@ -312,16 +312,8 @@
 }
 
 .progress-bar {
-  height: 100% !important;
-  width: 0% !important; /* 初始宽度0%，由JS动态设置 */
-  background: linear-gradient(90deg, #10B981, #34D399) !important;
-  transition: width 0.4s ease-in-out !important;
-  border-radius: 3px !important;
-  position: relative !important;
-  box-sizing: border-box !important;
-  will-change: width !important;
-  display: block !important;
-  min-width: 1px !important; /* 确保至少有1px可见 */
+  /* 所有样式由HTML inline style和JavaScript控制，CSS不干预 */
+  /* 不设置width、background等，避免!important覆盖inline style */
 }
 
 .status-text {
