@@ -39,84 +39,170 @@ ${reviewText}
 请严格按照以下JSON格式返回分析结果：
 
 {
-  "genderRatio": {
-    "male": 7.23,
-    "female": 31.45,
-    "unknown": 61.32
-  },
-  "demographics": [
+  "persona": [
     {
-      "persona": "婴儿父母",
-      "percentage": 24.15,
-      "reason": "许多评论提到为0-1岁婴儿购买，是最大的消费群体"
+      "keyword": "Son",
+      "keywordCn": "儿子",
+      "positiveCount": 145,
+      "negativeCount": 22
     },
     {
-      "persona": "幼儿父母",
-      "percentage": 14.50,
-      "reason": "评论中频繁提及1-3岁幼儿使用场景"
+      "keyword": "Daughter",
+      "keywordCn": "女儿",
+      "positiveCount": 98,
+      "negativeCount": 15
     },
     {
-      "persona": "孕妇/准妈妈",
-      "percentage": 10.20,
-      "reason": "部分评论提到为即将出生的宝宝准备"
+      "keyword": "Wife",
+      "keywordCn": "妻子",
+      "positiveCount": 78,
+      "negativeCount": 12
+    },
+    {
+      "keyword": "Husband",
+      "keywordCn": "丈夫",
+      "positiveCount": 65,
+      "negativeCount": 8
+    },
+    {
+      "keyword": "Parents",
+      "keywordCn": "父母",
+      "positiveCount": 45,
+      "negativeCount": 7
     }
   ],
   "usageTime": [
     {
-      "occasion": "生日派对",
-      "percentage": 26.00,
-      "reason": "许多评论提到在生日派对等特殊场合使用，强调了它适合此类活动"
+      "keyword": "Daily Use",
+      "keywordCn": "日常使用",
+      "positiveCount": 120,
+      "negativeCount": 18
     },
     {
-      "occasion": "复活节",
-      "percentage": 14.00,
-      "reason": "一些评论指出这件衣服是在复活节庆祝活动中穿的，并指出了它的季节性"
+      "keyword": "Weekend",
+      "keywordCn": "周末",
+      "positiveCount": 85,
+      "negativeCount": 12
     },
     {
-      "occasion": "日常使用",
-      "percentage": 12.00,
-      "reason": "部分用户表示日常生活中经常使用"
+      "keyword": "Evening",
+      "keywordCn": "晚上",
+      "positiveCount": 60,
+      "negativeCount": 9
+    },
+    {
+      "keyword": "Morning",
+      "keywordCn": "早晨",
+      "positiveCount": 45,
+      "negativeCount": 6
+    },
+    {
+      "keyword": "Night",
+      "keywordCn": "夜晚",
+      "positiveCount": 38,
+      "negativeCount": 5
     }
   ],
   "usageLocation": [
     {
-      "place": "家庭聚会",
-      "percentage": 20.00,
-      "reason": "评论中经常提到在家庭聚会场合使用"
+      "keyword": "Home",
+      "keywordCn": "家中",
+      "positiveCount": 180,
+      "negativeCount": 25
     },
     {
-      "place": "户外活动",
-      "percentage": 15.00,
-      "reason": "用户提到在公园等户外场所使用"
+      "keyword": "Office",
+      "keywordCn": "办公室",
+      "positiveCount": 95,
+      "negativeCount": 18
     },
     {
-      "place": "派对会场",
-      "percentage": 10.00,
-      "reason": "多次提到在派对等社交场合使用"
+      "keyword": "Gym",
+      "keywordCn": "健身房",
+      "positiveCount": 72,
+      "negativeCount": 15
+    },
+    {
+      "keyword": "Outdoor",
+      "keywordCn": "户外",
+      "positiveCount": 58,
+      "negativeCount": 10
+    },
+    {
+      "keyword": "Travel",
+      "keywordCn": "旅行",
+      "positiveCount": 42,
+      "negativeCount": 8
     }
   ],
-  "behaviors": [
+  "behavior": [
     {
-      "behavior": "送礼",
-      "percentage": 16.00,
-      "reason": "许多评论提到购买这件衣服作为礼物送给新父母或孩子的礼物"
+      "keyword": "Listening to Music",
+      "keywordCn": "听音乐",
+      "positiveCount": 195,
+      "negativeCount": 28
     },
     {
-      "behavior": "拍照留念",
-      "percentage": 10.00,
-      "reason": "多个评论提到这件衣服非常适合拍照"
+      "keyword": "Working",
+      "keywordCn": "工作",
+      "positiveCount": 125,
+      "negativeCount": 20
     },
     {
-      "behavior": "等待特殊活动",
-      "percentage": 9.00,
-      "reason": "用户购买后等待特定场合再使用"
+      "keyword": "Exercising",
+      "keywordCn": "锻炼",
+      "positiveCount": 88,
+      "negativeCount": 16
+    },
+    {
+      "keyword": "Gaming",
+      "keywordCn": "玩游戏",
+      "positiveCount": 65,
+      "negativeCount": 12
+    },
+    {
+      "keyword": "Watching Videos",
+      "keywordCn": "看视频",
+      "positiveCount": 52,
+      "negativeCount": 9
     }
   ]
 }
 
 **深度分析要求（必须严格遵守）：**
 
-1. **性别比例识别（genderRatio）** - ⚠️ 最重要的分析维度：
+1. **人群特征（persona）** - ⚠️ 必须返回5个以上：
+   - keyword: 英文关键词（如 "Son", "Daughter", "Wife", "Husband", "Parents"）
+   - keywordCn: 中文翻译（如 "儿子", "女儿", "妻子", "丈夫", "父母"）
+   - positiveCount: 4-5星评论中提及次数
+   - negativeCount: 1-3星评论中提及次数
+   - **必须至少返回5个人群特征**
+
+2. **使用时刻（usageTime）** - ⚠️ 必须返回5个以上：
+   - keyword: 英文关键词（如 "Daily Use", "Weekend", "Evening", "Morning"）
+   - keywordCn: 中文翻译（如 "日常使用", "周末", "晚上", "早晨"）
+   - positiveCount: 4-5星评论中提及次数
+   - negativeCount: 1-3星评论中提及次数
+   - **必须至少返回5个使用时刻**
+
+3. **使用地点（usageLocation）** - ⚠️ 必须返回5个以上：
+   - keyword: 英文关键词（如 "Home", "Office", "Gym", "Outdoor"）
+   - keywordCn: 中文翻译（如 "家中", "办公室", "健身房", "户外"）
+   - positiveCount: 4-5星评论中提及次数
+   - negativeCount: 1-3星评论中提及次数
+   - **必须至少返回5个使用地点**
+   - ⚠️ 如果评论中没有明确提到，根据产品特性推测合理地点
+
+4. **行为特征（behavior）** - ⚠️ 必须返回5个以上：
+   - keyword: 英文关键词（如 "Listening to Music", "Working", "Exercising"）
+   - keywordCn: 中文翻译（如 "听音乐", "工作", "锻炼"）
+   - positiveCount: 4-5星评论中提及次数
+   - negativeCount: 1-3星评论中提及次数
+   - **必须至少返回5个行为特征**
+
+**弃用字段说明（以下字段已不再使用）：**
+
+XX. **性别比例识别（genderRatio）** - ⚠️ 最重要的分析维度：
    
    **🎯 多层次识别策略（按优先级从高到低）：**
    
@@ -238,26 +324,26 @@ ${reviewText}
    - ✅ 百分比精确到小数点后2位
    - ✅ 每个行为必须有reason说明（可以说"根据产品特性推测"）
 
-**百分比计算说明：**
-- genderRatio：三者之和=100.00
-- demographics, usageTime, usageLocation, behaviors：各自独立计算，不要求加总100%
-- 计算方式：(该项提及次数 / 该维度总提及次数) × 100
-- 精确到小数点后2位（如：24.15, 14.50）
+**数据统计说明：**
+- positiveCount: 在4-5星评论中提及该关键词的次数（整数）
+- negativeCount: 在1-3星评论中提及该关键词的次数（整数）
+- 统计方式：遍历所有评论，如果评论内容包含该关键词，则计数+1
+- 示例：如果100条评论中，有45条4-5星评论提到"son"，3条1-3星评论提到"son"，则positiveCount=45, negativeCount=3
 
 **输出格式要求：**
 - 必须返回有效的JSON格式
-- 所有字段必须用中文（persona, occasion, place, behavior, reason）
-- 百分比是纯数字，不要加%符号
-- reason说明要具体，引用评论关键词
+- keyword使用英文，keywordCn使用中文翻译
+- positiveCount和negativeCount必须是整数（不是百分比）
+- 确保每个维度都有至少5个数据点
 
 **⚠️ 最终检查（必须通过）：**
-1. ✅ genderRatio: male + female + unknown = 100.00
-2. ✅ demographics: 至少3个persona，每个有percentage和reason
-3. ✅ usageTime: 至少3个occasion，每个有percentage和reason
-4. ✅ **usageLocation: 必须至少3个place，不允许为空数组或"数据不足"**
-5. ✅ **behaviors: 必须至少3个behavior，每个有percentage和reason，不允许少于3个**
+1. ✅ persona: 至少5个，每个有keyword/keywordCn/positiveCount/negativeCount
+2. ✅ usageTime: 至少5个，每个有keyword/keywordCn/positiveCount/negativeCount
+3. ✅ **usageLocation: 必须至少5个，不允许为空数组或"数据不足"**
+4. ✅ **behavior: 必须至少5个，每个有keyword/keywordCn/positiveCount/negativeCount**
+5. ✅ positiveCount和negativeCount必须是整数，不能是小数或百分比
 
-**如果usageLocation为空或返回"数据不足"，系统会报错！请务必返回真实数据！**
+**如果任何维度为空或少于5个，系统会报错！请务必返回真实数据！**
 
 请仔细分析评论内容，提取真实的消费者画像特征。`
   }
