@@ -38,11 +38,33 @@
             </div>
           </div>
           <div class="product-header">
-            <h1 class="product-title">{{ productData.productNameCn }}</h1>
-            <div class="product-meta">
-              <span class="product-subtitle">{{ productData.productName }}</span>
-              <span class="divider">|</span>
-              <span class="asin-text">ASIN: {{ productData.asin }}</span>
+            <!-- ✅ 产品图片和信息并排显示 -->
+            <div class="product-header-main">
+              <img 
+                v-if="productData.productImage" 
+                :src="productData.productImage" 
+                :alt="productData.productName"
+                class="product-main-image"
+              />
+              <div class="product-info">
+                <h1 class="product-title">{{ productData.productNameCn }}</h1>
+                <div class="product-meta">
+                  <span class="product-subtitle">{{ productData.productName }}</span>
+                  <span class="divider">|</span>
+                  <span class="asin-text">ASIN: {{ productData.asin }}</span>
+                  <span class="divider">|</span>
+                  <span class="review-count">{{ productData.reviewCount }} 条评论</span>
+                  <span v-if="productData.analyzedAt" class="divider">|</span>
+                  <span v-if="productData.analyzedAt" class="analyzed-time">分析于: {{ formatDate(productData.analyzedAt) }}</span>
+                </div>
+                <!-- ✅ 下载报告按钮 -->
+                <div class="report-actions">
+                  <el-button type="primary" size="default" @click="downloadReport">
+                    <el-icon><Download /></el-icon>
+                    下载完整报告
+                  </el-button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -80,6 +102,7 @@
             <UsageScenarios
               :data="productData.usageScenarios"
               :product-name="productData.productNameCn"
+              :all-reviews="productData.reviews || []"
             />
           </div>
 
@@ -137,8 +160,10 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { HomeFilled, User } from '@element-plus/icons-vue'
+import { HomeFilled, User, Download } from '@element-plus/icons-vue'
 import { ElMessage, ElLoading } from 'element-plus'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 import ConsumerProfile from '@/components/ConsumerProfile.vue'
 import UsageScenarios from '@/components/UsageScenarios.vue'
 import StarRatingImpact from '@/components/StarRatingImpact.vue'
@@ -192,6 +217,75 @@ function handleAccountClick() {
   })
 }
 
+// ✅ 格式化日期
+function formatDate(dateString) {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+// ✅ 下载完整报告（PDF）
+async function downloadReport() {
+  const loading = ElLoading.service({
+    lock: true,
+    text: '正在生成PDF报告...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  })
+  
+  try {
+    // 获取页面内容区域
+    const pageContent = document.querySelector('.page-content')
+    
+    // 生成canvas
+    const canvas = await html2canvas(pageContent, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      logging: false,
+      useCORS: true,
+      allowTaint: true
+    })
+    
+    // 创建PDF
+    const imgWidth = 210 // A4宽度（mm）
+    const pageHeight = 297 // A4高度（mm）
+    const imgHeight = (canvas.height * imgWidth) / canvas.width
+    let heightLeft = imgHeight
+    
+    const pdf = new jsPDF('p', 'mm', 'a4')
+    let position = 0
+    
+    // 添加图片到PDF
+    const imgData = canvas.toDataURL('image/png')
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+    heightLeft -= pageHeight
+    
+    // 如果内容超过一页，添加新页
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight
+      pdf.addPage()
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+    }
+    
+    // 下载PDF
+    const fileName = `Amazon评论分析报告-${productData.value.asin}-${new Date().toISOString().slice(0, 10)}.pdf`
+    pdf.save(fileName)
+    
+    ElMessage.success('报告下载成功！')
+  } catch (error) {
+    console.error('生成PDF失败:', error)
+    ElMessage.error('生成PDF失败，请重试')
+  } finally {
+    loading.close()
+  }
+}
+
 // 处理滚动事件
 function handleScroll() {
   const moduleNav = document.querySelector('.module-nav')
@@ -216,6 +310,10 @@ function handleScroll() {
 }
 
 onMounted(async () => {
+  // ✅ 清除所有本地缓存，防止显示旧数据
+  localStorage.removeItem('lastAnalysisResult')
+  sessionStorage.clear()
+  
   // 根据ASIN加载不同的数据
   const asin = route.params.asin
   
@@ -237,7 +335,7 @@ onMounted(async () => {
       })
       
       let attempts = 0
-      const maxAttempts = 60  // 最多等待2分钟
+      const maxAttempts = 90  // 最多等待3分钟
       let taskCompleted = false
       
       while (attempts < maxAttempts) {
@@ -253,27 +351,47 @@ onMounted(async () => {
         const status = taskData.status
         
         if (status === 'completed') {
-          // 任务完成
+          // ✅ 任务完成 - 必须有有效数据
           if (taskData.result && taskData.result.analysis) {
+            // ✅ 确保数据完整性
+            const analysis = taskData.result.analysis
+            
+            if (!analysis.consumerProfile || !analysis.usageScenarios) {
+              loading.close()
+              throw new Error('分析数据不完整，请重新分析')
+            }
+            
             productData.value = {
               asin: asin,
-              productName: 'Amazon Product Analysis',
+              productName: taskData.result.meta?.productName || 'Amazon Product Analysis',
               productNameCn: 'Amazon产品分析',
-              ...taskData.result.analysis
+              productImage: taskData.result.meta?.productImage || taskData.productImage || '',
+              reviewCount: taskData.result.reviews?.length || 0,
+              analyzedAt: taskData.result.meta?.analyzedAt || taskData.createdAt || new Date().toISOString(),
+              reviews: taskData.result.reviews || [], // ✅ 添加评论数据
+              ...analysis
             }
             taskCompleted = true
             loading.close()
-            ElMessage.success('分析完成！')
-            console.log('成功从API加载分析结果')
+            ElMessage.success(`分析完成！共分析 ${productData.value.reviewCount} 条评论`)
+            console.log('✅ 成功从API加载分析结果，ASIN:', asin)
+            console.log('✅ 数据包含:', Object.keys(analysis))
           } else {
             loading.close()
-            throw new Error('分析结果为空')
+            throw new Error('分析结果为空，请重新分析')
           }
           break
           
         } else if (status === 'failed') {
           loading.close()
-          throw new Error(taskData.error || '分析失败')
+          
+          // ✅ 特殊处理API配额错误
+          const errorMsg = taskData.error || '未知错误'
+          if (errorMsg.includes('quota exhausted') || errorMsg.includes('配额已用完')) {
+            throw new Error('⚠️ AI分析服务配额已用完，请联系管理员充值')
+          } else {
+            throw new Error(errorMsg)
+          }
           
         } else if (status === 'pending' || status === 'scraping' || status === 'analyzing') {
           // 任务进行中，更新进度
@@ -281,7 +399,7 @@ onMounted(async () => {
           const statusText = {
             'pending': '准备中',
             'scraping': '正在抓取评论',
-            'analyzing': 'AI分析中'
+            'analyzing': '任务进行中'
           }
           loading.text = `${statusText[status]} ${progress}%`
           
@@ -292,14 +410,28 @@ onMounted(async () => {
       
       if (!taskCompleted && attempts >= maxAttempts) {
         loading.close()
-        throw new Error('任务超时，请刷新页面重试')
+        throw new Error('任务超时，请稍后刷新页面重试')
       }
       
     } catch (error) {
-      console.error('获取报告失败:', error)
-      ElMessage.error('加载失败：' + error.message)
-      // 失败时显示demo数据
-      productData.value = earbudsData
+      console.error('❌ 获取报告失败:', error)
+      ElMessage.error({
+        message: '加载失败：' + error.message,
+        duration: 5000,
+        showClose: true
+      })
+      
+      // ❌ 不要在失败时显示demo数据！这会误导用户
+      // ⚠️ 显示错误页面或空状态
+      ElMessage.info({
+        message: '请返回首页重新创建分析任务',
+        duration: 3000
+      })
+      
+      // 3秒后自动跳转回首页
+      setTimeout(() => {
+        window.location.href = '/'
+      }, 3000)
     }
   }
 
@@ -459,6 +591,30 @@ onUnmounted(() => {
 
   .product-header {
     padding: 20px 0 24px;
+    
+    // ✅ 产品图片和信息并排
+    .product-header-main {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+    
+    // ✅ 产品主图
+    .product-main-image {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      background: white;
+      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      flex-shrink: 0;
+    }
+    
+    .product-info {
+      flex: 1;
+      min-width: 0; // 防止文字溢出
+    }
   }
 
   .product-title {
@@ -472,7 +628,23 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-wrap: wrap; // ✅ 允许换行
     font-size: 14px;
+    margin-bottom: 16px; // ✅ 与下方按钮保持间距
+  }
+  
+  // ✅ 下载报告按钮样式
+  .report-actions {
+    display: flex;
+    gap: 12px;
+    
+    .el-button {
+      font-weight: 500;
+      
+      .el-icon {
+        margin-right: 4px;
+      }
+    }
   }
 
   .product-subtitle {

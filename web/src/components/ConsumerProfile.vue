@@ -29,6 +29,19 @@
       通过对用户评论的分析，洞察消费者画像、使用习惯和行为特征
     </div>
 
+    <!-- ✅ 消费者画像总结 -->
+    <div v-if="summary" class="profile-summary">
+      <div class="summary-title">🔍 关键洞察</div>
+      <div class="summary-content">
+        消费者最常提到的
+        <span v-if="summary.topPersona" class="summary-tag persona">人群特征是 <strong>{{ summary.topPersona }}</strong></span><template v-if="summary.topUsageTime">,</template>
+        <span v-if="summary.topUsageTime" class="summary-tag time">使用时刻是 <strong>{{ summary.topUsageTime }}</strong></span><template v-if="summary.topLocation">,</template>
+        <span v-if="summary.topLocation" class="summary-tag location">使用地点是 <strong>{{ summary.topLocation }}</strong></span><template v-if="summary.topBehavior">,</template>
+        <span v-if="summary.topBehavior" class="summary-tag behavior">行为是 <strong>{{ summary.topBehavior }}</strong></span>。
+        关注这些热门关键词，挖掘消费者使用场景背后的痛点。
+      </div>
+    </div>
+
     <!-- 4个堆叠柱状图 - 一行四列 -->
     <div class="module-body">
       <div class="charts-container-horizontal">
@@ -120,6 +133,32 @@ const props = defineProps({
 })
 
 const isTranslated = ref(false)
+
+// ✅ 计算消费者画像总结（最常提到的Top 1）
+const summary = computed(() => {
+  if (!props.data) return null
+  
+  const getTopItem = (dimensionKey) => {
+    const items = props.data[dimensionKey] || []
+    if (items.length === 0) return null
+    
+    // 找到总提及数最高的项
+    const sorted = [...items].sort((a, b) => {
+      const totalA = (a.positiveCount || 0) + (a.negativeCount || 0)
+      const totalB = (b.positiveCount || 0) + (b.negativeCount || 0)
+      return totalB - totalA
+    })
+    
+    return sorted[0]?.label || sorted[0]?.name || null
+  }
+  
+  return {
+    topPersona: getTopItem('persona'),
+    topUsageTime: getTopItem('usageTime'),
+    topLocation: getTopItem('usageLocation'),
+    topBehavior: getTopItem('behavior')
+  }
+})
 
 // 获取图表配置（垂直柱状图 - 对称式设计）
 function getChartOption(dimension) {
@@ -338,6 +377,46 @@ async function exportToPNG() {
 
 <style lang="scss" scoped>
 .consumer-profile-module {
+  // ✅ 消费者画像总结样式
+  .profile-summary {
+    margin: 20px 24px;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    
+    .summary-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .summary-content {
+      font-size: 15px;
+      line-height: 1.8;
+      color: rgba(255, 255, 255, 0.95);
+      
+      .summary-tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        margin: 0 4px;
+        
+        strong {
+          color: #fff;
+          font-weight: 600;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+      }
+    }
+  }
+  
   .module-body {
     background: #fafbfc;
   }

@@ -58,9 +58,11 @@
         v-for="item in displayData" 
         :key="item.desc"
         class="data-row scenario-row"
+        @click="openReviewDialog(item)"
       >
-        <div class="col-desc">
+        <div class="col-desc clickable">
           {{ isTranslated ? item.descCn : item.desc }}
+          <el-icon class="view-icon"><View /></el-icon>
         </div>
         <div class="col-percentage">
           <span class="percentage-text">
@@ -88,13 +90,22 @@
         收起
       </el-button>
     </div>
+
+    <!-- ✅ 原评论弹窗 -->
+    <ReviewDialog
+      v-model:visible="reviewDialogVisible"
+      :keyword="selectedKeyword"
+      :reviews="allReviews"
+      :title="dialogTitle"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import { QuestionFilled, ArrowDown } from '@element-plus/icons-vue'
+import { QuestionFilled, ArrowDown, View } from '@element-plus/icons-vue'
 import html2canvas from 'html2canvas'
+import ReviewDialog from './ReviewDialog.vue'
 
 const props = defineProps({
   data: {
@@ -104,6 +115,11 @@ const props = defineProps({
   productName: {
     type: String,
     default: 'Product'
+  },
+  // ✅ 新增：所有评论数据（用于原评论弹窗）
+  allReviews: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -111,6 +127,13 @@ const isTranslated = ref(false)
 const INITIAL_DISPLAY_COUNT = 10
 const LOAD_MORE_COUNT = 10  // 每次加载10条
 const currentDisplayCount = ref(INITIAL_DISPLAY_COUNT)
+
+// ✅ 原评论弹窗相关状态
+const reviewDialogVisible = ref(false)
+const selectedKeyword = ref('')
+const dialogTitle = computed(() => {
+  return selectedKeyword.value ? `"${selectedKeyword.value}" 相关评论` : '原始评论'
+})
 
 const displayData = computed(() => {
   return props.data.slice(0, currentDisplayCount.value)
@@ -137,6 +160,12 @@ function loadMore() {
 
 function collapse() {
   currentDisplayCount.value = INITIAL_DISPLAY_COUNT
+}
+
+// ✅ 打开原评论弹窗
+function openReviewDialog(item) {
+  selectedKeyword.value = isTranslated.value ? (item.descCn || item.desc) : item.desc
+  reviewDialogVisible.value = true
 }
 
 function handleDownload(command) {
@@ -208,6 +237,14 @@ async function exportToPNG() {
   .scenario-row {
     grid-template-columns: 15% 20% 65%;
     gap: 16px;
+    cursor: pointer; // ✅ 添加点击指针
+    transition: all 0.2s;
+    
+    &:hover {
+      background: #f0f9ff !important;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+    }
   }
 
   .col-desc {
@@ -217,6 +254,23 @@ async function exportToPNG() {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    
+    // ✅ 可点击样式
+    &.clickable {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #3b82f6;
+      
+      .view-icon {
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      
+      &:hover .view-icon {
+        opacity: 1;
+      }
+    }
   }
 
   .col-percentage {

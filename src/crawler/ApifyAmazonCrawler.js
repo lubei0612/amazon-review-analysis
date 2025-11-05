@@ -31,6 +31,7 @@ class ApifyAmazonCrawler {
    * @param {string} asin - Amazon ASIN
    * @param {number} maxReviews - 最大评论数（默认Infinity表示全量）
    * @param {function} onProgress - 进度回调
+   * @returns {Object} { reviews, productInfo } - 评论数组和产品信息（包括图片）
    */
   async getReviews(asin, maxReviews = Infinity, onProgress = null) {
     if (!this.isAvailable()) {
@@ -48,23 +49,54 @@ class ApifyAmazonCrawler {
       const runId = await this.startActorRun(asin, maxPages)
       
       // 2. 等待运行完成并获取结果
-      const reviews = await this.waitForResults(runId, onProgress)
+      const rawData = await this.waitForResults(runId, onProgress)
       
-      // 3. 转换为标准格式
-      const standardizedReviews = this.parseReviews(reviews)
+      // 3. 提取产品信息（从第一条评论中）
+      const productInfo = this.extractProductInfo(rawData)
+      
+      // 4. 转换为标准格式
+      const standardizedReviews = this.parseReviews(rawData)
       
       logger.info(`✅ Apify爬取完成，共获取 ${standardizedReviews.length} 条评论`)
       
-      // 限制返回数量
-      if (maxReviews !== Infinity && standardizedReviews.length > maxReviews) {
-        return standardizedReviews.slice(0, maxReviews)
+      if (productInfo.image) {
+        logger.info(`🖼️ 产品图片: ${productInfo.image}`)
       }
       
-      return standardizedReviews
+      // 限制返回数量
+      const finalReviews = maxReviews !== Infinity && standardizedReviews.length > maxReviews
+        ? standardizedReviews.slice(0, maxReviews)
+        : standardizedReviews
+      
+      return {
+        reviews: finalReviews,
+        productInfo: productInfo
+      }
       
     } catch (error) {
       logger.error(`❌ Apify爬取失败: ${error.message}`)
       throw error
+    }
+  }
+  
+  /**
+   * 从Apify数据中提取产品信息
+   */
+  extractProductInfo(apifyData) {
+    if (!apifyData || apifyData.length === 0) {
+      return {}
+    }
+    
+    // 从第一条评论中提取产品通用信息
+    const firstItem = apifyData[0]
+    
+    return {
+      asin: firstItem.asin || '',
+      productTitle: firstItem.productTitle || '',
+      image: firstItem.productImage || firstItem.image || '',
+      rating: firstItem.productRating || '',
+      totalReviews: firstItem.totalReviews || apifyData.length,
+      locale: firstItem.locale || 'en_US'
     }
   }
   

@@ -70,11 +70,14 @@ class CrawlerFacade {
       try {
         logger.info('🚀 使用 Apify 主爬虫...')
         
-        const reviews = await this.apify.getReviews(
+        const result = await this.apify.getReviews(
           asin,
           maxReviews,
           onProgress
         )
+        
+        const reviews = result.reviews || result // 兼容旧格式
+        const productInfo = result.productInfo || {}
         
         logger.info(`✅ Apify成功，获取 ${reviews.length} 条评论`)
         
@@ -88,6 +91,7 @@ class CrawlerFacade {
           success: true,
           source: 'Apify',
           reviews: reviews,
+          productInfo: productInfo,
           count: reviews.length,
           asin: asin
         }

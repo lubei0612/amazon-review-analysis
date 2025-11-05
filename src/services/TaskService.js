@@ -100,7 +100,18 @@ class TaskService {
       })
       
       rawReviews = crawlResult.reviews
+      const productInfo = crawlResult.productInfo || {}
+      
       logger.info(`✅ ${crawlResult.source} 爬取完成: ${rawReviews.length} 条评论`)
+      
+      // ✅ 保存产品信息（包括图片）
+      if (productInfo.image) {
+        logger.info(`🖼️ 产品图片: ${productInfo.image}`)
+        this.updateTask(taskId, { 
+          productImage: productInfo.image,
+          productTitle: productInfo.productTitle || task.asin
+        })
+      }
       
       // 2. 数据清洗
       logger.info(`开始清洗 ${rawReviews.length} 条评论`)
@@ -129,7 +140,12 @@ class TaskService {
           reviews: sortedReviews,
           analysis: analysisResult.data,
           statistics: DataCleaner.getStatistics(sortedReviews),
-          meta: analysisResult.meta
+          meta: {
+            ...analysisResult.meta,
+            productImage: productInfo.image || '',
+            productTitle: productInfo.productTitle || task.asin,
+            totalReviews: sortedReviews.length
+          }
         }
       })
       

@@ -144,10 +144,19 @@
             v-for="report in filteredReports" 
             :key="report.id"
             class="report-card"
-            @click="goToReport(report.asin)"
+            @click="goToReport(report.asin, report)"
           >
             <div class="card-image">
-              <div class="image-placeholder">
+              <!-- ✅ 优先显示产品图片 -->
+              <img 
+                v-if="report.productImage" 
+                :src="report.productImage" 
+                :alt="report.name"
+                class="product-image"
+                @error="handleImageError"
+              />
+              <!-- 降级显示占位符 -->
+              <div v-else class="image-placeholder">
                 <span class="placeholder-icon">📦</span>
               </div>
               <span class="demo-badge" v-if="report.isDemo">Demo</span>
@@ -157,6 +166,20 @@
               <div class="card-meta">
                 <span class="meta-item">Total ASIN: {{ report.totalAsin }}</span>
                 <span class="meta-item">{{ report.createdAt }}</span>
+              </div>
+              
+              <!-- ✅ 状态和进度显示 -->
+              <div v-if="report.status === 'analyzing'" class="status-section analyzing">
+                <el-progress :percentage="report.progress" :stroke-width="6" />
+                <span class="status-text">{{ report.progress }}% 分析中...</span>
+              </div>
+              <div v-else-if="report.status === 'completed'" class="status-section completed">
+                <el-icon class="status-icon success"><SuccessFilled /></el-icon>
+                <span class="status-text">分析完成</span>
+              </div>
+              <div v-else-if="report.status === 'failed'" class="status-section failed">
+                <el-icon class="status-icon error"><CircleCloseFilled /></el-icon>
+                <span class="status-text">分析失败</span>
               </div>
             </div>
           </div>
@@ -225,7 +248,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowDown, Search, VideoPlay, Plus, HomeFilled, User } from '@element-plus/icons-vue'
+import { ArrowDown, Search, VideoPlay, Plus, HomeFilled, User, SuccessFilled, CircleCloseFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
@@ -417,13 +440,34 @@ async function handleCreateReport() {
     
     if (result.success) {
       const taskId = result.data.taskId
-      ElMessage.success('任务创建成功！正在跳转到详细报告...')
-      showCreateDialog.value = false
       
-      // ✅ 跳转到报告详情页（会自动轮询等待）
-      setTimeout(() => {
-        router.push(`/report/${taskId}`)
-      }, 500)
+      // ✅ 添加新报告到列表（不跳转，留在首页）
+      reports.value.unshift({
+        id: Date.now(),
+        name: `分析中... (${asin})`,
+        asin: taskId, // 使用taskId作为标识
+        totalAsin: 0,
+        createdAt: new Date().toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }).replace(/\//g, '/').replace(',', ''),
+        isDemo: false,
+        status: 'analyzing', // 新增状态字段
+        progress: 0,
+        realAsin: asin // 保存真实ASIN
+      })
+      
+      ElMessage.success('任务创建成功！正在后台分析，请稍候...')
+      showCreateDialog.value = false
+      newReport.value.keyword = '' // 清空表单
+      
+      // ✅ 开始轮询任务状态
+      pollTaskStatus(taskId, reports.value[0])
+      
     } else {
       throw new Error(result.message || '创建失败')
     }
@@ -437,17 +481,127 @@ async function handleCreateReport() {
 }
 
 // 跳转到报告详情
-function goToReport(asin) {
+function goToReport(asin, report) {
+  // ✅ 如果任务正在进行中，提示用户等待
+  if (report && report.status === 'analyzing') {
+    ElMessage.info('报告正在分析中，请稍候...')
+    return
+  }
+  
+  // ✅ 如果任务失败，提示用户
+  if (report && report.status === 'failed') {
+    ElMessage.error('该报告分析失败，无法查看')
+    return
+  }
+  
   router.push(`/report/${asin}`)
+}
+
+// 图片加载失败处理
+function handleImageError(event) {
+  // 图片加载失败时隐藏img标签，显示占位符
+  event.target.style.display = 'none'
+}
+
+// ✅ 轮询任务状态
+async function pollTaskStatus(taskId, report) {
+  let attempts = 0
+  const maxAttempts = 90 // 最多3分钟
+  
+  const poll = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/tasks/${taskId}/status`)
+      const data = await response.json()
+      
+      if (data.success) {
+        const taskData = data.data
+        
+        // 更新进度
+        report.progress = taskData.progress || 0
+        
+        const statusMap = {
+          'pending': '准备中',
+          'scraping': '正在抓取评论',
+          'analyzing': '任务进行中',
+          'completed': '分析完成',
+          'failed': '分析失败'
+        }
+        
+        if (taskData.status === 'completed') {
+          report.status = 'completed'
+          report.name = `${report.realAsin || taskId.slice(0, 8)} - 已完成`
+          report.totalAsin = taskData.result?.reviews?.length || 0
+          // ✅ 保存产品图片
+          if (taskData.result?.meta?.productImage) {
+            report.productImage = taskData.result.meta.productImage
+          }
+          ElMessage.success({
+            message: `分析完成！共分析 ${report.totalAsin} 条评论`,
+            duration: 3000
+          })
+          return // 停止轮询
+          
+        } else if (taskData.status === 'failed') {
+          report.status = 'failed'
+          report.name = `${report.realAsin || taskId.slice(0, 8)} - 失败`
+          
+          // ✅ 特殊处理API配额错误
+          const errorMsg = taskData.error || '未知错误'
+          if (errorMsg.includes('quota exhausted') || errorMsg.includes('配额已用完')) {
+            ElMessage.error({
+              message: '⚠️ AI分析服务配额已用完，请联系管理员充值',
+              duration: 5000,
+              showClose: true
+            })
+          } else {
+            ElMessage.error('分析失败：' + errorMsg)
+          }
+          return // 停止轮询
+          
+        } else if (attempts < maxAttempts) {
+          // 继续轮询
+          const statusText = statusMap[taskData.status] || '处理中'
+          report.name = `${report.realAsin || taskId.slice(0, 8)} - ${statusText}`
+          attempts++
+          setTimeout(poll, 2000) // 2秒后再次轮询
+          
+        } else {
+          // 超时
+          report.status = 'failed'
+          report.name = `${report.realAsin || taskId.slice(0, 8)} - 超时`
+          ElMessage.error('分析超时，请稍后重试')
+        }
+      } else {
+        throw new Error('查询任务状态失败')
+      }
+    } catch (error) {
+      console.error('轮询失败:', error)
+      report.status = 'failed'
+      report.name = `${report.realAsin || taskId.slice(0, 8)} - 网络错误`
+      ElMessage.error('网络错误，请检查后端服务')
+    }
+  }
+  
+  poll()
 }
 
 // 加载报告列表
 async function loadReports() {
   try {
-    // TODO: 从后端API获取报告列表
-    // const response = await fetch('/api/tasks/list')
+    // TODO: 从后端API获取历史报告列表
+    // const response = await fetch('http://localhost:3001/api/tasks')
     // const data = await response.json()
-    // reports.value = data.tasks
+    // if (data.success) {
+    //   reports.value = data.data.map(task => ({
+    //     id: task.taskId,
+    //     name: task.asin,
+    //     asin: task.taskId,
+    //     totalAsin: task.result?.reviews?.length || 0,
+    //     createdAt: new Date(task.createdAt).toLocaleString('zh-CN'),
+    //     isDemo: false,
+    //     status: task.status
+    //   }))
+    // }
     
     console.log('报告列表已加载（当前为Mock数据）')
   } catch (error) {
@@ -880,6 +1034,15 @@ onMounted(() => {
       align-items: center;
       justify-content: center;
 
+      // ✅ 真实产品图片样式
+      .product-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain; // 保持比例，完整显示
+        background: white;
+        padding: 16px;
+      }
+      
       .image-placeholder {
         display: flex;
         align-items: center;
@@ -928,6 +1091,61 @@ onMounted(() => {
         .meta-item {
           &:first-child {
             color: #2563eb;
+            font-weight: 500;
+          }
+        }
+      }
+      
+      // ✅ 状态显示样式
+      .status-section {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #f3f4f6;
+        
+        &.analyzing {
+          .status-text {
+            display: block;
+            margin-top: 6px;
+            font-size: 12px;
+            color: #3b82f6;
+            font-weight: 500;
+          }
+          
+          :deep(.el-progress__text) {
+            font-size: 12px !important;
+          }
+        }
+        
+        &.completed {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          
+          .status-icon.success {
+            font-size: 18px;
+            color: #10b981;
+          }
+          
+          .status-text {
+            font-size: 13px;
+            color: #10b981;
+            font-weight: 500;
+          }
+        }
+        
+        &.failed {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          
+          .status-icon.error {
+            font-size: 18px;
+            color: #ef4444;
+          }
+          
+          .status-text {
+            font-size: 13px;
+            color: #ef4444;
             font-weight: 500;
           }
         }

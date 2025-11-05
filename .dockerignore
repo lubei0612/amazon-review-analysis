@@ -1,0 +1,67 @@
+# ===================================
+# Docker构建忽略文件
+# ===================================
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 日志文件
+logs/
+*.log
+
+# 测试文件
+tests/
+*.test.js
+*.spec.js
+
+# 文档
+docs/
+*.md
+!README.md
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 环境变量文件（通过docker-compose注入）
+.env
+.env.local
+.env.*.local
+
+# 临时文件
+tmp/
+temp/
+.DS_Store
+Thumbs.db
+
+# 归档文件
+_archive/
+
+# 构建产物（前端）
+web/dist/
+web/node_modules/
+
+# Chrome扩展
+chrome-extension/
+
+# Demo文件
+demo/
+
+# 批处理文件
+*.bat
+
+# JSON测试结果
+*-result-*.json
+analysis-result-*.json
+
