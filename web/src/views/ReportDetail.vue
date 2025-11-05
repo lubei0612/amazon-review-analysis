@@ -90,7 +90,13 @@
       <!-- 主内容区 -->
       <div class="page-content">
         <div class="container">
-          <!-- 6个模块 -->
+          <!-- ✅ 消费者洞察 (7个维度) -->
+          <div class="insights-section">
+            <h2 class="section-title">📊 消费者洞察</h2>
+            <p class="section-description">基于AI分析评论数据，深度洞察消费者画像、使用场景、产品体验和购买动机</p>
+          </div>
+
+          <!-- 消费者画像 -->
           <div id="consumer-profile" class="module-section">
             <ConsumerProfile
               :data="productData.consumerProfile"
