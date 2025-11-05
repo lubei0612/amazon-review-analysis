@@ -9,9 +9,26 @@ class DataCleaner {
    * @returns {Array} 清洗后的评论数组
    */
   static cleanReviews(reviews) {
-    return reviews
-      .map(review => this.cleanSingleReview(review))
-      .filter(review => this.isValidReview(review))
+    const cleaned = reviews.map(review => this.cleanSingleReview(review))
+    const valid = cleaned.filter(review => this.isValidReview(review))
+    
+    // ✅ 添加调试日志
+    if (valid.length === 0 && cleaned.length > 0) {
+      const logger = require('../utils/logger')
+      logger.error('🔍 数据清洗失败！所有评论都被过滤了')
+      logger.error(`   原因分析（第一条评论）:`)
+      const first = cleaned[0]
+      if (!first.content && !first.title) {
+        logger.error(`   ❌ 内容和标题都为空`)
+        logger.error(`      content: "${first.content}"`)
+        logger.error(`      title: "${first.title}"`)
+      }
+      if (first.rating < 1 || first.rating > 5) {
+        logger.error(`   ❌ 评分无效: ${first.rating}`)
+      }
+    }
+    
+    return valid
   }
   
   /**
