@@ -466,6 +466,11 @@ async function exportToPNG() {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 16px;
     margin-bottom: 24px;
+
+    // ✅ 响应式：手机竖向排列
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
   }
   
   .header-cell {

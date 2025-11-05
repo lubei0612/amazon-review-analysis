@@ -149,7 +149,8 @@ const summary = computed(() => {
       return totalB - totalA
     })
     
-    return sorted[0]?.label || sorted[0]?.name || null
+    // ✅ 修复：使用keyword而不是label/name
+    return sorted[0]?.keyword || sorted[0]?.keywordCn || sorted[0]?.label || sorted[0]?.name || null
   }
   
   return {
@@ -423,16 +424,20 @@ async function exportToPNG() {
 
   .charts-container-horizontal {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, 1fr); // ✅ 默认1行4列
     gap: 24px;
     padding: 24px;
 
-    @media (max-width: 1200px) {
+    // ✅ 平板：2列
+    @media (max-width: 1400px) {
       grid-template-columns: repeat(2, 1fr);
     }
 
+    // ✅ 手机：1列
     @media (max-width: 768px) {
       grid-template-columns: 1fr;
+      padding: 16px;
+      gap: 16px;
     }
   }
 

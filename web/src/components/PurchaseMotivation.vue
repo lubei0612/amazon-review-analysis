@@ -200,6 +200,22 @@ async function exportToPNG() {
 
 <style lang="scss" scoped>
 .purchase-motivation-module {
+  // ✅ 响应式布局
+  @media (max-width: 1200px) {
+    .table-header,
+    .motivation-row {
+      grid-template-columns: 30% 25% 45% !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .table-header,
+    .motivation-row {
+      grid-template-columns: 1fr !important;
+      gap: 12px;
+    }
+  }
+
   .table-header {
     grid-template-columns: 15% 20% 65%;
     gap: 16px;

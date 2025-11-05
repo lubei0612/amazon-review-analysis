@@ -290,6 +290,27 @@ async function exportToPNG() {
 
 <style lang="scss" scoped>
 .product-experience-module {
+  // ✅ 响应式布局
+  @media (max-width: 1200px) {
+    .table-header,
+    .experience-row {
+      grid-template-columns: 25% 25% 50% !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .table-header,
+    .experience-row {
+      grid-template-columns: 1fr !important;
+      gap: 12px;
+    }
+    
+    .col-percentage {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
   .section-title {
     padding: 16px 20px 12px;
     font-size: 15px;

@@ -40,7 +40,7 @@
           <template #content>
             <div style="line-height: 1.6;">
               <strong>提及占比计算公式：</strong><br/>
-              标签占比 = 标签对应的评论数量 / 总评论数量 × 100%<br/>
+              标签占比 = (标签对应的评论数量 / 总评论数量) × 100%<br/>
               <span style="color: #9CA3AF; font-size: 12px;">
                 由于一条评论可能对应多个标签，提及占比之和可能超过100%
               </span>
@@ -66,12 +66,12 @@
         </div>
         <div class="col-percentage">
           <span class="percentage-text">
-            {{ (item.percentage * 100).toFixed(1) }}%({{ item.count }})
+            {{ formatPercentage(item.percentage) }}% ({{ item.count }})
           </span>
           <div class="progress-bar-bg">
             <div 
               class="progress-bar-fill blue" 
-              :style="{ width: (item.percentage * 100) + '%' }"
+              :style="{ width: Math.min(formatPercentage(item.percentage), 100) + '%' }"
             ></div>
           </div>
         </div>
@@ -160,6 +160,17 @@ function loadMore() {
 
 function collapse() {
   currentDisplayCount.value = INITIAL_DISPLAY_COUNT
+}
+
+// ✅ 格式化百分比（修复3100%问题）
+function formatPercentage(value) {
+  if (!value) return 0
+  // 如果值已经是百分比形式（>1），直接返回
+  if (value > 1) {
+    return value.toFixed(1)
+  }
+  // 如果是小数形式（0-1），转换为百分比
+  return (value * 100).toFixed(1)
 }
 
 // ✅ 打开原评论弹窗
