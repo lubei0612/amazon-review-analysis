@@ -95,6 +95,7 @@
             <ConsumerProfile
               :data="productData.consumerProfile"
               :product-name="productData.productNameCn"
+              :all-reviews="productData.reviews || []"
             />
           </div>
 

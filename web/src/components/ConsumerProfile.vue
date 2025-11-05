@@ -34,13 +34,33 @@
       <div class="summary-title">🔍 关键洞察</div>
       <div class="summary-content">
         消费者最常提到的
-        <span v-if="summary.topPersona" class="summary-tag persona">人群特征是 <strong>{{ summary.topPersona }}</strong></span><template v-if="summary.topUsageTime">,</template>
-        <span v-if="summary.topUsageTime" class="summary-tag time">使用时刻是 <strong>{{ summary.topUsageTime }}</strong></span><template v-if="summary.topLocation">,</template>
-        <span v-if="summary.topLocation" class="summary-tag location">使用地点是 <strong>{{ summary.topLocation }}</strong></span><template v-if="summary.topBehavior">,</template>
-        <span v-if="summary.topBehavior" class="summary-tag behavior">行为是 <strong>{{ summary.topBehavior }}</strong></span>。
+        <span v-if="summary.topPersona" class="summary-tag persona clickable" @click="openReviewDialog('persona', summary.topPersona)">
+          人群特征是 <strong>{{ isTranslated ? summary.topPersonaCn : summary.topPersona }}</strong>
+          <el-icon class="view-icon-small"><View /></el-icon>
+        </span><template v-if="summary.topUsageTime">,</template>
+        <span v-if="summary.topUsageTime" class="summary-tag time clickable" @click="openReviewDialog('usageTime', summary.topUsageTime)">
+          使用时刻是 <strong>{{ isTranslated ? summary.topUsageTimeCn : summary.topUsageTime }}</strong>
+          <el-icon class="view-icon-small"><View /></el-icon>
+        </span><template v-if="summary.topLocation">,</template>
+        <span v-if="summary.topLocation" class="summary-tag location clickable" @click="openReviewDialog('usageLocation', summary.topLocation)">
+          使用地点是 <strong>{{ isTranslated ? summary.topLocationCn : summary.topLocation }}</strong>
+          <el-icon class="view-icon-small"><View /></el-icon>
+        </span><template v-if="summary.topBehavior">,</template>
+        <span v-if="summary.topBehavior" class="summary-tag behavior clickable" @click="openReviewDialog('behavior', summary.topBehavior)">
+          行为是 <strong>{{ isTranslated ? summary.topBehaviorCn : summary.topBehavior }}</strong>
+          <el-icon class="view-icon-small"><View /></el-icon>
+        </span>。
         关注这些热门关键词，挖掘消费者使用场景背后的痛点。
       </div>
     </div>
+
+    <!-- ✅ 原评论弹窗 -->
+    <ReviewDialog
+      v-model:visible="reviewDialogVisible"
+      :keyword="selectedKeyword"
+      :reviews="allReviews"
+      :title="dialogTitle"
+    />
 
     <!-- 4个堆叠柱状图 - 一行四列 -->
     <div class="module-body">
@@ -109,9 +129,10 @@ import {
   LegendComponent
 } from 'echarts/components'
 import VChart from 'vue-echarts'
-import { ArrowDown } from '@element-plus/icons-vue'
+import { ArrowDown, View } from '@element-plus/icons-vue'
 import * as XLSX from 'xlsx'
 import html2canvas from 'html2canvas'
+import ReviewDialog from './ReviewDialog.vue'
 
 use([
   CanvasRenderer,
@@ -129,10 +150,19 @@ const props = defineProps({
   productName: {
     type: String,
     default: 'Product'
+  },
+  allReviews: {
+    type: Array,
+    default: () => []
   }
 })
 
 const isTranslated = ref(false)
+
+// ✅ 原评论弹窗相关
+const reviewDialogVisible = ref(false)
+const selectedKeyword = ref('')
+const dialogTitle = ref('')
 
 // ✅ 计算消费者画像总结（最常提到的Top 1）
 const summary = computed(() => {
@@ -149,15 +179,23 @@ const summary = computed(() => {
       return totalB - totalA
     })
     
-    // ✅ 修复：使用keyword而不是label/name
-    return sorted[0]?.keyword || sorted[0]?.keywordCn || sorted[0]?.label || sorted[0]?.name || null
+    return sorted[0] || null
   }
   
+  const topPersonaItem = getTopItem('persona')
+  const topUsageTimeItem = getTopItem('usageTime')
+  const topLocationItem = getTopItem('usageLocation')
+  const topBehaviorItem = getTopItem('behavior')
+  
   return {
-    topPersona: getTopItem('persona'),
-    topUsageTime: getTopItem('usageTime'),
-    topLocation: getTopItem('usageLocation'),
-    topBehavior: getTopItem('behavior')
+    topPersona: topPersonaItem?.keyword || topPersonaItem?.label || topPersonaItem?.name || null,
+    topPersonaCn: topPersonaItem?.keywordCn || topPersonaItem?.keyword || null,
+    topUsageTime: topUsageTimeItem?.keyword || topUsageTimeItem?.label || null,
+    topUsageTimeCn: topUsageTimeItem?.keywordCn || topUsageTimeItem?.keyword || null,
+    topLocation: topLocationItem?.keyword || topLocationItem?.label || null,
+    topLocationCn: topLocationItem?.keywordCn || topLocationItem?.keyword || null,
+    topBehavior: topBehaviorItem?.keyword || topBehaviorItem?.label || null,
+    topBehaviorCn: topBehaviorItem?.keywordCn || topBehaviorItem?.keyword || null
   }
 })
 
@@ -305,6 +343,20 @@ function handleDownload(command) {
   } else {
     exportToPNG()
   }
+}
+
+// ✅ 打开原评论弹窗
+function openReviewDialog(dimension, keyword) {
+  const dimensionNames = {
+    'persona': '人群特征',
+    'usageTime': '使用时刻',
+    'usageLocation': '使用地点',
+    'behavior': '行为特征'
+  }
+  
+  selectedKeyword.value = keyword
+  dialogTitle.value = `${dimensionNames[dimension]} - ${keyword}`
+  reviewDialogVisible.value = true
 }
 
 // 导出XLSX（4个sheet）
