@@ -18,24 +18,30 @@
 const logger = require('../../utils/logger')
 const OutscraperCrawler = require('./OutscraperCrawler')
 const RapidAPICrawler = require('./RapidAPICrawler')
+const ApifyAmazonCrawler = require('./ApifyAmazonCrawler')  // ✅ 新增 Apify 爬虫
 const PuppeteerCrawler = require('./PuppeteerCrawler')
 
 class CrawlerFacade {
   constructor() {
-    // 初始化三个爬虫Provider
+    // 初始化所有爬虫Provider
     this.outscraper = new OutscraperCrawler()
+    this.apify = new ApifyAmazonCrawler()  // ✅ Apify 爬虫
     this.rapidapi = new RapidAPICrawler()
-    this.puppeteer = new PuppeteerCrawler()  // ✅ 添加Puppeteer作为终极备选
+    this.puppeteer = new PuppeteerCrawler()
     
-    // 爬虫优先级（Outscraper → RapidAPI → Puppeteer）
-    this.primaryCrawler = this.outscraper
+    // ✅ 爬虫优先级（Apify优先，因为更稳定）
+    // Apify → Outscraper → RapidAPI → Puppeteer
+    this.primaryCrawler = this.apify.isAvailable() ? this.apify : this.outscraper
     this.fallbackCrawler = this.rapidapi
-    this.lastResortCrawler = this.puppeteer  // 总是可用，但速度慢
+    this.lastResortCrawler = this.puppeteer
+    
+    // ✅ 读取环境变量：是否启用 Puppeteer 降级（默认禁用）
+    this.enablePuppeteerFallback = process.env.ENABLE_PUPPETEER_FALLBACK === 'true'
     
     logger.info('✅ CrawlerFacade已初始化')
-    logger.info(`   主爬虫: Outscraper (${this.outscraper.isAvailable() ? '可用' : '未配置'})`)
+    logger.info(`   主爬虫: ${this.apify.isAvailable() ? 'Apify (可用)' : 'Outscraper (' + (this.outscraper.isAvailable() ? '可用' : '未配置') + ')'}`)
     logger.info(`   备用爬虫1: RapidAPI (${this.rapidapi.isAvailable() ? '可用' : '未配置'})`)
-    logger.info(`   备用爬虫2: Puppeteer (${this.puppeteer.isAvailable() ? '可用' : '未配置'})`)
+    logger.info(`   备用爬虫2: Puppeteer (${this.enablePuppeteerFallback ? (this.puppeteer.isAvailable() ? '可用' : '未配置') : '已禁用'})`)
   }
   
   /**
@@ -59,7 +65,42 @@ class CrawlerFacade {
     logger.info(`   目标评论数: ${maxReviews === Infinity ? '全量（无限制）' : maxReviews + '条'}`)
     logger.info(`   Amazon站点: ${domain}`)
     
-    // 优先使用Outscraper
+    // ✅ 优先使用 Apify（如果配置了）
+    if (this.apify.isAvailable()) {
+      try {
+        logger.info('🚀 使用 Apify 主爬虫...')
+        
+        const reviews = await this.apify.getReviews(
+          asin,
+          maxReviews,
+          onProgress
+        )
+        
+        logger.info(`✅ Apify成功，获取 ${reviews.length} 条评论`)
+        
+        // ✅ 检查空数据并触发降级
+        if (reviews.length === 0) {
+          logger.warn('⚠️ Apify返回0条评论，触发降级策略')
+          throw new Error('Apify返回空数据')
+        }
+        
+        return {
+          success: true,
+          source: 'Apify',
+          reviews: reviews,
+          count: reviews.length,
+          asin: asin
+        }
+        
+      } catch (error) {
+        logger.warn(`❌ Apify失败: ${error.message}`)
+        logger.warn('🔄 准备降级到 Outscraper/RapidAPI...')
+        
+        // 继续尝试降级
+      }
+    }
+    
+    // 降级到 Outscraper
     if (this.outscraper.isAvailable()) {
       try {
         logger.info('🚀 使用 Outscraper 主爬虫...')
@@ -120,6 +161,17 @@ class CrawlerFacade {
         
       } catch (error) {
         logger.warn(`❌ RapidAPI也失败: ${error.message}`)
+        
+        // ✅ 检查是否启用 Puppeteer 降级
+        if (!this.enablePuppeteerFallback) {
+          logger.error('❌ Puppeteer 降级已禁用（环境变量 ENABLE_PUPPETEER_FALLBACK=false）')
+          logger.error('💡 提示：')
+          logger.error('   1. 检查 RapidAPI Key 是否正确')
+          logger.error('   2. 运行诊断脚本：node diagnose-rapidapi.js')
+          logger.error('   3. 查看 RapidAPI 配额：https://rapidapi.com/developer/dashboard')
+          throw new Error(`RapidAPI 失败: ${error.message}`)
+        }
+        
         logger.warn('🔄 准备降级到 Puppeteer...')
         
         // 继续尝试终极备选
@@ -129,7 +181,7 @@ class CrawlerFacade {
     }
     
     // 终极备选：Puppeteer（总是可用，免费但慢）
-    if (this.puppeteer.isAvailable()) {
+    if (this.enablePuppeteerFallback && this.puppeteer.isAvailable()) {
       try {
         logger.info('🔄 使用 Puppeteer 终极备选爬虫...')
         

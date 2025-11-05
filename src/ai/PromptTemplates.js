@@ -28,7 +28,7 @@ class PromptTemplates {
    */
   static getConsumerProfilePrompt(reviews) {
     const reviewText = reviews.slice(0, 200).map((r, i) => 
-      `[${i+1}] 评分:${r.rating}星 | 作者:${r.author?.name || '匿名'} | ${r.title} | ${r.content}`
+      `[${i+1}] 评分:${r.rating}星 | 作者:${r.userName || r.author?.name || '匿名'} | ${r.title} | ${r.body || r.content || ''}`
     ).join('\n')
 
     return `你是一位专业的消费者行为分析师。请基于以下Amazon产品评论，进行深度的消费者画像分析。
@@ -233,7 +233,10 @@ ${reviewText}
 5. **行为特征（behaviors）**：
    - 购买行为：gift（送礼）, collect（收藏）, replace（替换）
    - 使用行为：photoshoot（拍照）, display（展示）, wear daily（日常穿着）
-   - 返回TOP 3-5项，百分比精确到小数点后2位
+   - ✅ **必须至少返回3个行为特征**
+   - ✅ 如果评论中真的没有明确信息，基于产品类型推测常见行为
+   - ✅ 百分比精确到小数点后2位
+   - ✅ 每个行为必须有reason说明（可以说"根据产品特性推测"）
 
 **百分比计算说明：**
 - genderRatio：三者之和=100.00
@@ -252,7 +255,7 @@ ${reviewText}
 2. ✅ demographics: 至少3个persona，每个有percentage和reason
 3. ✅ usageTime: 至少3个occasion，每个有percentage和reason
 4. ✅ **usageLocation: 必须至少3个place，不允许为空数组或"数据不足"**
-5. ✅ behaviors: 至少3个behavior，每个有percentage和reason
+5. ✅ **behaviors: 必须至少3个behavior，每个有percentage和reason，不允许少于3个**
 
 **如果usageLocation为空或返回"数据不足"，系统会报错！请务必返回真实数据！**
 
@@ -264,7 +267,7 @@ ${reviewText}
    */
   static getUsageScenariosPrompt(reviews) {
     const reviewText = reviews.slice(0, 100).map((r, i) => 
-      `[${i+1}] ${r.rating}星 | ${r.title} | ${r.content}`
+      `[${i+1}] ${r.rating}星 | ${r.title} | ${r.body || r.content || ''}`
     ).join('\n')
 
     return `你是一位专业的产品使用场景分析师。请基于以下${reviews.length}条Amazon产品评论，深度分析用户的使用场景。
@@ -330,7 +333,7 @@ ${reviewText}
    */
   static getStarRatingImpactPrompt(reviews) {
     const reviewText = reviews.map(r => 
-      `${r.rating}星 | ${r.title} | ${r.content}`
+      `${r.rating}星 | ${r.title} | ${r.body || r.content || ''}`
     ).join('\n')
 
     return `分析不同星级评论的关注点差异。
@@ -364,7 +367,7 @@ ${reviewText}
   static getProductExperienceStrengthsPrompt(reviews) {
     const positiveReviews = reviews.filter(r => r.rating >= 4)
     const reviewText = positiveReviews.slice(0, 100).map(r => 
-      `${r.rating}星 | ${r.content}`
+      `${r.rating}星 | ${r.body || r.content || ''}`
     ).join('\n')
 
     return `分析产品的优点（只返回前5条）。
@@ -420,7 +423,7 @@ ${reviewText}
   static getProductExperienceWeaknessesPrompt(reviews) {
     const negativeReviews = reviews.filter(r => r.rating <= 3)
     const reviewText = negativeReviews.slice(0, 100).map(r => 
-      `${r.rating}星 | ${r.content}`
+      `${r.rating}星 | ${r.body || r.content || ''}`
     ).join('\n')
 
     return `分析产品的缺点（只返回前5条）。
@@ -475,7 +478,7 @@ ${reviewText}
    */
   static getPurchaseMotivationPrompt(reviews) {
     const reviewText = reviews.slice(0, 100).map(r => 
-      `${r.content}`
+      `${r.body || r.content || ''}`
     ).join('\n')
 
     return `分析用户购买动机（只返回前5条）。
@@ -535,7 +538,7 @@ ${reviewText}
   static getUnmetNeedsPrompt(reviews) {
     const negativeReviews = reviews.filter(r => r.rating <= 3)
     const reviewText = negativeReviews.map(r => 
-      `${r.rating}星 | ${r.content}`
+      `${r.rating}星 | ${r.body || r.content || ''}`
     ).join('\n')
 
     return `从负面和中性评论中提取未被满足的需求（只返回前5条）。

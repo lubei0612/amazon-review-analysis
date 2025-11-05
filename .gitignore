@@ -1,80 +1,79 @@
-# 依赖
-node_modules/
-web/node_modules/
+# ===================================
+# Git忽略配置
+# ===================================
 
-# 环境变量和配置
+# 环境变量文件（包含敏感信息）
 .env
 .env.local
 .env.*.local
 
-# 日志
-logs/
-*.log
+# Node modules
+node_modules/
+web/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
+package-lock.json
 
-# 调试文件
-debug/
-.vscode/
-.idea/
+# 日志文件
+logs/
+*.log
 
-# 操作系统
+# 临时文件
+tmp/
+temp/
+*.tmp
+*.bak
+
+# 系统文件
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# 构建输出
-dist/
-build/
-web/dist/
-
-# 临时文件
-*.tmp
-*.temp
+# IDE
+.vscode/
+.idea/
 *.swp
 *.swo
 *~
 
-# 数据库
-*.db
-*.sqlite
-*.sqlite3
-
-# 缓存
-.cache/
-.parcel-cache/
-.eslintcache
+# 构建产物
+web/dist/
+web/.temp/
+build/
+dist/
 
 # 测试覆盖率
 coverage/
 .nyc_output/
+
+# 测试结果文件
+*-result-*.json
+analysis-result-*.json
+server-test-result-*.json
+
+# Docker
+.dockerignore
+
+# 数据库
+*.sqlite
+*.db
+
+# 调试文件
+debug-*.html
+debug-*.js
+debug-*.png
+
+# 归档（已整理）
+_archive/
 
 # PM2
 .pm2/
 pids/
 *.pid
 *.seed
-*.pid.lock
 
-# 备份文件
-*.bak
-*.backup
-
-# Chrome扩展打包文件
-chrome-extension/*.crx
-chrome-extension/*.pem
-
-# 敏感信息
-secrets/
-credentials/
-
-# 大文件
-*.zip
-*.tar.gz
-*.rar
-
-# 开发工具
-.vite-inspect/
-
+# 其他
+.cache/
+.npm/
+.eslintcache

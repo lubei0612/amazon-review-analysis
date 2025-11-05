@@ -13,8 +13,8 @@ class RapidAPICrawler {
     
     // ✅ 可用站点列表（按优先级排序）
     // 注意：US站点可能需要付费套餐，CA/UK等站点通常免费可用
-    this.availableDomains = ['US', 'CA', 'UK', 'DE', 'FR', 'IT', 'ES', 'JP']
-    this.currentDomain = 'US' // 默认使用美国站点
+    this.availableDomains = ['CA', 'UK', 'DE', 'FR', 'IT', 'ES', 'JP', 'US']
+    this.currentDomain = 'CA' // 默认使用加拿大站点（更稳定）
     
     if (!this.apiKey) {
       logger.warn('⚠️ RAPIDAPI_KEY 未配置，RapidAPI爬虫不可用')

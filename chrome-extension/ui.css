@@ -746,6 +746,11 @@
 .modal-body .reason-col {
   color: #6B7280;
   line-height: 1.6;
+  white-space: normal !important;  /* ✅ 允许换行 */
+  overflow: visible !important;     /* ✅ 显示完整内容 */
+  text-overflow: clip !important;   /* ✅ 不显示省略号 */
+  max-width: none !important;       /* ✅ 不限制宽度 */
+  word-wrap: break-word;            /* ✅ 长单词换行 */
 }
 
 /* 模态框内的消费者画像样式 */

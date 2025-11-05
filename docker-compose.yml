@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # ===================================
+  # 后端服务
+  # ===================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: amazon-review-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      # AI分析服务
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_BASE_URL=${GEMINI_BASE_URL:-https://aihubmix.com/v1}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-pro}
+      - GEMINI_TEMPERATURE=${GEMINI_TEMPERATURE:-0.3}
+      - GEMINI_MAX_TOKENS=${GEMINI_MAX_TOKENS:-8000}
+      
+      # 爬虫服务
+      - APIFY_API_TOKEN=${APIFY_API_TOKEN}
+      - ENABLE_PUPPETEER_FALLBACK=${ENABLE_PUPPETEER_FALLBACK:-false}
+      
+      # 服务器配置
+      - PORT=3001
+      - NODE_ENV=${NODE_ENV:-production}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DEBUG=${DEBUG:-false}
+    volumes:
+      # 持久化日志
+      - ./logs:/app/logs
+      # 如果需要持久化数据库（未来）
+      # - ./data:/app/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/api/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1); });"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ===================================
+  # 前端服务（Web报告页面）
+  # ===================================
+  frontend:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: amazon-review-frontend
+    restart: unless-stopped
+    ports:
+      - "3002:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  logs:
+    driver: local
+

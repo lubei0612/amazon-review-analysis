@@ -805,14 +805,39 @@ let fullAnalysisData = null
 
 // 打开模态框显示完整维度数据
 function openDimensionModal(moduleName, moduleTitle) {
+  console.log('🔍 [DEBUG] 点击放大按钮:', { moduleName, moduleTitle })
+  
   const modal = document.querySelector('#dimension-modal')
   const modalTitle = document.querySelector('#modal-title')
   const modalBody = document.querySelector('#modal-body')
   
+  console.log('🔍 [DEBUG] 检查元素:')
+  console.log('  - modal:', modal ? '✅ 存在' : '❌ 不存在')
+  console.log('  - modalTitle:', modalTitle ? '✅ 存在' : '❌ 不存在')
+  console.log('  - modalBody:', modalBody ? '✅ 存在' : '❌ 不存在')
+  console.log('  - fullAnalysisData:', fullAnalysisData ? '✅ 存在' : '❌ null')
+  
+  if (fullAnalysisData) {
+    console.log('🔍 [DEBUG] fullAnalysisData keys:', Object.keys(fullAnalysisData))
+  }
+  
   if (!modal || !modalTitle || !modalBody || !fullAnalysisData) {
-    console.error('模态框元素或数据不存在')
+    console.error('❌ 模态框元素或数据不存在')
+    console.error('详细信息:', {
+      modal: !!modal,
+      modalTitle: !!modalTitle,
+      modalBody: !!modalBody,
+      fullAnalysisData: !!fullAnalysisData
+    })
+    
+    // 如果数据不存在，给用户友好的提示
+    if (!fullAnalysisData) {
+      alert('请先完成分析后再查看详情')
+    }
     return
   }
+  
+  console.log('✅ [DEBUG] 所有元素和数据都存在，准备显示模态框')
   
   // 设置标题
   modalTitle.textContent = moduleTitle
@@ -860,11 +885,15 @@ function openDimensionModal(moduleName, moduleTitle) {
   
   modalBody.innerHTML = content || '<p style="text-align:center;color:#999;">暂无数据</p>'
   
+  console.log('✅ [DEBUG] 模态框内容已设置，长度:', content ? content.length : 0)
+  
   // 显示模态框
   modal.style.display = 'flex'
+  console.log('✅ [DEBUG] 模态框已显示 (display = flex)')
   
   // 添加关闭事件
   setupModalCloseEvents(modal)
+  console.log('✅ [DEBUG] 关闭事件已设置')
 }
 
 // 渲染消费者画像模态框内容

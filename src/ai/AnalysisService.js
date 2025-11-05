@@ -3,7 +3,9 @@
 // ================================
 
 const logger = require('../../utils/logger')
+// 🔥 真实 Gemini API 模式
 const GeminiProvider = require('./GeminiProvider')
+// const GeminiProvider = require('./MockGeminiProvider')  // 演示模式（已禁用）
 const PromptTemplates = require('./PromptTemplates')
 
 class AnalysisService {
