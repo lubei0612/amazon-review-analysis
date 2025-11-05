@@ -134,6 +134,16 @@
               :product-name="productData.productNameCn"
             />
           </div>
+
+          <!-- ✅ 竞品分析模块 -->
+          <div id="competitor-analysis" class="module-section">
+            <CompetitorAnalysis
+              :current-product="currentProductForComparison"
+              :competitors="competitorsData"
+              @add-competitor="handleAddCompetitor"
+              @remove-competitor="handleRemoveCompetitor"
+            />
+          </div>
         </div>
       </div>
 
@@ -158,7 +168,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { HomeFilled, User, Download } from '@element-plus/icons-vue'
 import { ElMessage, ElLoading } from 'element-plus'
@@ -170,6 +180,7 @@ import StarRatingImpact from '@/components/StarRatingImpact.vue'
 import ProductExperience from '@/components/ProductExperience.vue'
 import PurchaseMotivation from '@/components/PurchaseMotivation.vue'
 import UnmetNeeds from '@/components/UnmetNeeds.vue'
+import CompetitorAnalysis from '@/components/CompetitorAnalysis.vue'
 
 // Mock数据导入
 import earbudsData from '@/mock/earbuds-data.js'
@@ -183,6 +194,31 @@ const activeModule = ref('consumer-profile')
 const navOffsetTop = ref(0)
 const sidebarExpanded = ref(false) // 侧边栏展开状态
 
+// ✅ 竞品数据
+const competitorsData = ref([])
+
+// ✅ 当前产品用于竞品对比
+const currentProductForComparison = computed(() => {
+  if (!productData.value) return null
+  
+  return {
+    asin: productData.value.asin || '',
+    name: productData.value.productName || '当前产品',
+    image: productData.value.productImage || '',
+    price: '$--',
+    rating: 4.5,
+    reviewCount: productData.value.reviewCount || 0,
+    advantages: (productData.value.productExperience?.positive || []).map(item => ({
+      en: item.desc || '',
+      cn: item.descCn || ''
+    })),
+    disadvantages: (productData.value.productExperience?.negative || []).map(item => ({
+      en: item.desc || '',
+      cn: item.descCn || ''
+    }))
+  }
+})
+
 // 模块导航项
 const navItems = [
   { id: 'consumer-profile', title: '消费者画像' },
@@ -190,7 +226,8 @@ const navItems = [
   { id: 'star-rating', title: '星级影响度' },
   { id: 'product-experience', title: '产品体验' },
   { id: 'purchase-motivation', title: '购买动机' },
-  { id: 'unmet-needs', title: '未被满足的需求' }
+  { id: 'unmet-needs', title: '未被满足的需求' },
+  { id: 'competitor-analysis', title: '竞品分析' }
 ]
 
 // 滚动到指定模块
@@ -283,6 +320,95 @@ async function downloadReport() {
     ElMessage.error('生成PDF失败，请重试')
   } finally {
     loading.close()
+  }
+}
+
+// ✅ 添加竞品
+async function handleAddCompetitor(asin) {
+  try {
+    // 创建分析任务
+    const response = await fetch('http://localhost:3001/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ asin, maxReviews: 100 })
+    })
+    
+    const data = await response.json()
+    
+    if (!data.success) {
+      throw new Error(data.message || '创建任务失败')
+    }
+    
+    ElMessage.info(`竞品分析任务已创建，任务ID: ${data.data.taskId}`)
+    
+    // 轮询任务状态
+    pollCompetitorTask(data.data.taskId, asin)
+  } catch (error) {
+    ElMessage.error('添加竞品失败：' + error.message)
+  }
+}
+
+// ✅ 轮询竞品任务状态
+async function pollCompetitorTask(taskId, asin) {
+  let attempts = 0
+  const maxAttempts = 60
+  
+  const timer = setInterval(async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/tasks/${taskId}/status`)
+      const data = await response.json()
+      
+      if (!data.success) {
+        clearInterval(timer)
+        ElMessage.error('获取竞品任务状态失败')
+        return
+      }
+      
+      const taskData = data.data
+      
+      if (taskData.status === 'completed') {
+        clearInterval(timer)
+        
+        // 添加到竞品列表
+        const competitor = {
+          asin: asin,
+          name: taskData.result.meta?.productName || asin,
+          image: taskData.result.meta?.productImage || '',
+          price: '$--', // 需要额外API获取价格
+          rating: 4.0, // 从评论计算平均分
+          reviewCount: taskData.result.reviews?.length || 0,
+          advantages: (taskData.result.analysis.productExperience?.strengths || [])
+            .slice(0, 5)
+            .map(item => ({ en: item.desc, cn: item.descCn || item.desc })),
+          disadvantages: (taskData.result.analysis.productExperience?.weaknesses || [])
+            .slice(0, 5)
+            .map(item => ({ en: item.desc, cn: item.descCn || item.desc }))
+        }
+        
+        competitorsData.value.push(competitor)
+        ElMessage.success(`竞品 ${asin} 分析完成！`)
+      } else if (taskData.status === 'failed') {
+        clearInterval(timer)
+        ElMessage.error(`竞品 ${asin} 分析失败`)
+      }
+      
+      attempts++
+      if (attempts >= maxAttempts) {
+        clearInterval(timer)
+        ElMessage.warning('竞品分析超时，请稍后重试')
+      }
+    } catch (error) {
+      clearInterval(timer)
+      ElMessage.error('获取任务状态失败')
+    }
+  }, 2000)
+}
+
+// ✅ 移除竞品
+function handleRemoveCompetitor(asin) {
+  const index = competitorsData.value.findIndex(c => c.asin === asin)
+  if (index > -1) {
+    competitorsData.value.splice(index, 1)
   }
 }
 
