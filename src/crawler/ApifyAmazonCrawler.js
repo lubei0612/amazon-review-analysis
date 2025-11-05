@@ -236,6 +236,12 @@ class ApifyAmazonCrawler {
    * 解析 Apify 数据为标准格式
    */
   parseReviews(apifyData) {
+    // ✅ 添加调试日志
+    logger.info(`🔍 Apify原始数据示例（前1条）:`)
+    if (apifyData && apifyData.length > 0) {
+      logger.info(JSON.stringify(apifyData[0], null, 2))
+    }
+    
     const reviews = []
     
     apifyData.forEach(item => {
@@ -272,6 +278,12 @@ class ApifyAmazonCrawler {
         logger.warn(`⚠️ 解析单条评论失败: ${error.message}`)
       }
     })
+    
+    // ✅ 调试转换后的数据
+    logger.info(`🔍 转换后数据示例（前1条）:`)
+    if (reviews.length > 0) {
+      logger.info(JSON.stringify(reviews[0], null, 2))
+    }
     
     return reviews
   }
