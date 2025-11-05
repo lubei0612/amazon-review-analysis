@@ -142,7 +142,12 @@
             />
           </div>
 
-          <!-- ✅ 竞品分析模块 -->
+          <!-- ✅ 竞品分析 (独立板块) -->
+          <div class="competitor-section">
+            <h2 class="section-title">🎯 竞品分析</h2>
+            <p class="section-description">多维度对比竞品，发现市场机会和产品优势</p>
+          </div>
+
           <div id="competitor-analysis" class="module-section">
             <CompetitorAnalysis
               :current-product="currentProductForComparison"
@@ -860,6 +865,56 @@ onUnmounted(() => {
 
 .module-section {
   scroll-margin-top: 80px;
+  margin-bottom: 24px;
+}
+
+// ✅ 板块标题样式
+.insights-section,
+.competitor-section {
+  margin: 32px 0 24px;
+  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+
+  .section-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-description {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    line-height: 1.6;
+  }
+}
+
+.competitor-section {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 4px 12px rgba(240, 147, 251, 0.2);
+}
+
+// ✅ 响应式
+@media (max-width: 768px) {
+  .insights-section,
+  .competitor-section {
+    margin: 24px 0 16px;
+    padding: 16px;
+
+    .section-title {
+      font-size: 20px;
+    }
+
+    .section-description {
+      font-size: 13px;
+    }
+  }
 }
 
 // 页脚
