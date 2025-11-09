@@ -268,8 +268,11 @@ function displayAnalysisResults(result, taskId, container) {
   if (analyzeBtn) {
     analyzeBtn.textContent = '📊 查看完整报告 →'
     analyzeBtn.disabled = false
-    analyzeBtn.onclick = () => {
-      const reportUrl = `http://localhost:3002/#/report/${taskId}`
+    analyzeBtn.onclick = async () => {
+      // 获取配置的前端URL
+      const config = await chrome.storage.local.get(['frontendUrl'])
+      const frontendUrl = config.frontendUrl || 'http://43.130.35.117:8089'
+      const reportUrl = `${frontendUrl}/#/report/${taskId}`
       window.open(reportUrl, '_blank')
     }
   }

@@ -17,7 +17,10 @@
   "host_permissions": [
     "https://*.amazon.com/*",
     "https://*.amazon.cn/*",
-    "http://localhost:*/*"
+    "http://localhost:*/*",
+    "http://43.130.35.117:*/*",
+    "http://*/*",
+    "https://*/*"
   ],
   "background": {
     "service_worker": "background.js"

@@ -2,12 +2,35 @@
 // Service Worker - 后台脚本
 // ========================
 
-const API_BASE_URL = 'http://localhost:3001/api'
+// 默认配置
+let API_BASE_URL = 'http://43.130.35.117:8088/api'
+
+// 初始化时加载配置
+async function loadConfig() {
+  try {
+    const result = await chrome.storage.local.get(['serverUrl'])
+    if (result.serverUrl) {
+      API_BASE_URL = `${result.serverUrl}/api`
+      console.log('已加载服务器配置:', API_BASE_URL)
+    }
+  } catch (error) {
+    console.error('加载配置失败:', error)
+  }
+}
 
 // 监听安装事件
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Amazon评论分析助手已安装')
+  // 设置默认配置
+  chrome.storage.local.set({
+    serverUrl: 'http://43.130.35.117:8088',
+    frontendUrl: 'http://43.130.35.117:8089'
+  })
+  loadConfig()
 })
+
+// 启动时加载配置
+loadConfig()
 
 // 监听来自Content Script的消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -23,6 +46,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   
   if (request.action === 'checkTaskStatus') {
     handleCheckTaskStatus(request.taskId, sendResponse)
+    return true
+  }
+  
+  if (request.action === 'updateConfig') {
+    // 更新配置
+    if (request.config && request.config.serverUrl) {
+      API_BASE_URL = `${request.config.serverUrl}/api`
+      console.log('配置已更新:', API_BASE_URL)
+      sendResponse({ success: true })
+    }
     return true
   }
 })

@@ -6,8 +6,9 @@ let currentProductInfo = null
 
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
-  // 加载 API 配置状态
+  // 加载配置（服务器地址 + API Key）
   loadApiKeyStatus()
+  loadServerConfig()
   
   // 刷新产品信息
   refreshProductInfo()
@@ -16,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('analyze-btn').addEventListener('click', startAnalysis)
   document.getElementById('refresh-btn').addEventListener('click', refreshProductInfo)
   document.getElementById('settings-toggle-btn').addEventListener('click', toggleSettings)
-  document.getElementById('save-api-key-btn').addEventListener('click', saveApiKey)
+  document.getElementById('save-api-key-btn').addEventListener('click', saveConfig)
   document.getElementById('test-api-btn').addEventListener('click', testApiConnection)
   
   // 绑定 AI Provider 切换事件
@@ -93,8 +94,12 @@ async function startAnalysis() {
     })
     
     if (response.success) {
+      // 获取配置的前端URL
+      const config = await chrome.storage.local.get(['frontendUrl'])
+      const frontendUrl = config.frontendUrl || 'http://43.130.35.117:8089'
+      
       // 任务创建成功，打开报告页面
-      const reportUrl = `http://localhost:3002/#/report/${response.taskId}`
+      const reportUrl = `${frontendUrl}/#/report/${response.taskId}`
       chrome.tabs.create({ url: reportUrl })
       
       // 关闭popup
@@ -113,15 +118,32 @@ async function startAnalysis() {
 }
 
 // ========================
-// API Key 管理功能
+// 配置管理功能
 // ========================
+
+// 加载服务器配置
+async function loadServerConfig() {
+  try {
+    const result = await chrome.storage.local.get(['serverUrl', 'frontendUrl'])
+    const serverUrl = result.serverUrl || 'http://43.130.35.117:8088'
+    const frontendUrl = result.frontendUrl || 'http://43.130.35.117:8089'
+    
+    document.getElementById('server-url-input').value = serverUrl
+    document.getElementById('frontend-url-input').value = frontendUrl
+    
+    console.log('服务器配置已加载:', { serverUrl, frontendUrl })
+  } catch (error) {
+    console.error('加载服务器配置失败:', error)
+  }
+}
 
 // 加载 API Key 状态
 async function loadApiKeyStatus() {
   try {
-    const result = await chrome.storage.local.get(['geminiApiKey', 'aiProvider'])
+    const result = await chrome.storage.local.get(['geminiApiKey', 'aiProvider', 'serverUrl'])
     const apiKey = result.geminiApiKey
-    const provider = result.aiProvider || 'gemini'  // 默认 gemini
+    const provider = result.aiProvider || 'gemini'
+    const serverUrl = result.serverUrl || 'http://43.130.35.117:8088'
     
     const apiStatus = document.getElementById('api-status')
     const apiInput = document.getElementById('api-key-input')
@@ -130,13 +152,17 @@ async function loadApiKeyStatus() {
     // 设置 Provider 选择器
     if (providerSelect) {
       providerSelect.value = provider
-      // 触发一次 change 事件，更新提示链接
       handleProviderChange({ target: { value: provider } })
     }
     
-    if (apiKey) {
+    if (apiKey && serverUrl !== 'http://43.130.35.117:8088') {
+      // API Key 和服务器都已配置（自定义服务器）
       apiInput.value = apiKey
-      apiStatus.textContent = `✅ 已配置 (${provider.toUpperCase()})`
+      apiStatus.textContent = `✅ 已配置 (自定义服务器)`
+      apiStatus.className = 'api-status success'
+    } else if (serverUrl === 'http://43.130.35.117:8088') {
+      // 使用默认服务器
+      apiStatus.textContent = `✅ 使用默认服务器`
       apiStatus.className = 'api-status success'
     } else {
       apiStatus.textContent = '❌ 未配置'
@@ -157,35 +183,43 @@ function toggleSettings() {
   }
 }
 
-// 保存 API Key
-async function saveApiKey() {
+// 保存所有配置（服务器地址 + API Key）
+async function saveConfig() {
+  const serverUrl = document.getElementById('server-url-input').value.trim() || 'http://43.130.35.117:8088'
+  const frontendUrl = document.getElementById('frontend-url-input').value.trim() || 'http://43.130.35.117:8089'
   const apiKey = document.getElementById('api-key-input').value.trim()
   const provider = document.getElementById('ai-provider-select').value
   const apiStatus = document.getElementById('api-status')
   
-  if (!apiKey) {
-    apiStatus.textContent = '❌ 请输入 API Key'
+  // 验证URL格式
+  try {
+    new URL(serverUrl)
+    new URL(frontendUrl)
+  } catch (error) {
+    apiStatus.textContent = '❌ URL格式不正确'
     apiStatus.className = 'api-status error'
     return
   }
   
-  // 基本格式验证（警告但不阻止保存）
-  if (provider === 'gemini' && !apiKey.startsWith('sk-') && !apiKey.startsWith('AIzaSy')) {
-    apiStatus.textContent = '⚠️ Gemini API Key 通常以 sk- 或 AIzaSy 开头'
-    apiStatus.className = 'api-status error'
-    // 但仍然允许保存
-  }
-  
   try {
+    // 保存所有配置
     await chrome.storage.local.set({ 
+      serverUrl: serverUrl,
+      frontendUrl: frontendUrl,
       geminiApiKey: apiKey,
-      aiProvider: provider     // 保存 Provider 选择
+      aiProvider: provider
     })
     
-    apiStatus.textContent = `✅ 保存成功 (${provider.toUpperCase()})`
+    // 通知 background.js 更新配置
+    await chrome.runtime.sendMessage({ 
+      action: 'updateConfig', 
+      config: { serverUrl, frontendUrl, apiKey, provider } 
+    })
+    
+    apiStatus.textContent = `✅ 配置已保存`
     apiStatus.className = 'api-status success'
     
-    console.log('API 配置已保存:', { provider, keyLength: apiKey.length })
+    console.log('配置已保存:', { serverUrl, frontendUrl, provider })
     
     // 2秒后自动隐藏设置面板
     setTimeout(() => {
@@ -195,49 +229,49 @@ async function saveApiKey() {
   } catch (error) {
     apiStatus.textContent = '❌ 保存失败'
     apiStatus.className = 'api-status error'
-    console.error('保存 API Key 失败:', error)
+    console.error('保存配置失败:', error)
   }
 }
 
-// 测试 API 连接
+// 测试服务器连接
 async function testApiConnection() {
-  const apiKey = document.getElementById('api-key-input').value.trim()
-  const provider = document.getElementById('ai-provider-select').value
+  const serverUrl = document.getElementById('server-url-input').value.trim() || 'http://43.130.35.117:8088'
   const apiStatus = document.getElementById('api-status')
   const testBtn = document.getElementById('test-api-btn')
   
-  if (!apiKey) {
-    apiStatus.textContent = '❌ 请先输入 API Key'
+  // 验证URL格式
+  try {
+    new URL(serverUrl)
+  } catch (error) {
+    apiStatus.textContent = '❌ 服务器URL格式不正确'
     apiStatus.className = 'api-status error'
     return
   }
   
   testBtn.disabled = true
   testBtn.textContent = '🔄 测试中...'
-  apiStatus.textContent = '🔄 正在测试连接...'
+  apiStatus.textContent = '🔄 正在测试服务器连接...'
   apiStatus.className = 'api-status'
   
   try {
-    const response = await chrome.runtime.sendMessage({
-      action: 'testApiKey',
-      apiKey: apiKey,
-      provider: provider  // 传递 Provider 信息
-    })
+    // 测试服务器健康检查
+    const response = await fetch(`${serverUrl}/api/health`)
+    const data = await response.json()
     
-    if (response.success) {
-      apiStatus.textContent = `✅ 连接成功 (${provider.toUpperCase()})`
+    if (response.ok && data.success) {
+      apiStatus.textContent = `✅ 服务器连接成功`
       apiStatus.className = 'api-status success'
     } else {
-      apiStatus.textContent = `❌ 连接失败: ${response.error || '未知错误'}`
+      apiStatus.textContent = `❌ 服务器响应异常`
       apiStatus.className = 'api-status error'
     }
   } catch (error) {
-    apiStatus.textContent = `❌ 测试失败: ${error.message}`
+    apiStatus.textContent = `❌ 无法连接到服务器: ${error.message}`
     apiStatus.className = 'api-status error'
-    console.error('API 测试失败:', error)
+    console.error('服务器测试失败:', error)
   } finally {
     testBtn.disabled = false
-    testBtn.textContent = '🔍 测试连接'
+    testBtn.textContent = '🔍 测试服务器连接'
   }
 }
 

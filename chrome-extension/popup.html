@@ -298,7 +298,35 @@
     <!-- API 设置面板 -->
     <div class="settings-panel" id="settings-panel" style="display: none;">
       <div class="settings-header">
-        <h3>⚙️ AI 配置</h3>
+        <h3>⚙️ 服务器配置</h3>
+      </div>
+      
+      <!-- 服务器地址配置 -->
+      <div class="form-group">
+        <label for="server-url-input">服务器地址:</label>
+        <input 
+          type="text" 
+          id="server-url-input" 
+          placeholder="http://43.130.35.117:8088"
+          class="input-field"
+        />
+        <div class="input-hint">
+          默认: http://43.130.35.117:8088 (生产环境)
+        </div>
+      </div>
+      
+      <!-- 前端地址配置 -->
+      <div class="form-group">
+        <label for="frontend-url-input">前端地址:</label>
+        <input 
+          type="text" 
+          id="frontend-url-input" 
+          placeholder="http://43.130.35.117:8089"
+          class="input-field"
+        />
+        <div class="input-hint">
+          用于查看完整报告（默认: http://43.130.35.117:8089）
+        </div>
       </div>
       
       <!-- AI Provider 选择器 -->
@@ -331,11 +359,11 @@
       </div>
       
       <button class="btn btn-primary" id="save-api-key-btn">
-        💾 保存设置
+        💾 保存配置
       </button>
       
       <button class="btn btn-secondary" id="test-api-btn">
-        🔍 测试连接
+        🔍 测试服务器连接
       </button>
     </div>
     
