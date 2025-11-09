@@ -25,6 +25,19 @@ GITHUB_REPO="lubei0612/amazon-review-analysis"
 APIFY_TOKEN="${1:-${APIFY_API_TOKEN}}"
 GEMINI_KEY="${2:-${GEMINI_API_KEY}}"
 
+# 检测docker-compose命令（兼容新旧版本）
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+elif docker compose version &> /dev/null; then
+    DOCKER_COMPOSE="docker compose"
+else
+    echo -e "${RED}❌ 未找到 docker-compose 或 docker compose 命令${NC}"
+    echo -e "${YELLOW}请安装 Docker Compose:${NC}"
+    echo -e "  Ubuntu/Debian: ${CYAN}sudo apt-get install docker-compose${NC}"
+    echo -e "  或使用新版本: ${CYAN}sudo apt-get install docker.io${NC}"
+    exit 1
+fi
+
 echo ""
 echo -e "${CYAN}╔════════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║   Amazon评论分析系统 - 一键部署脚本      ║${NC}"
@@ -131,13 +144,13 @@ echo ""
 
 # 4. 停止旧容器
 echo -e "${CYAN}🛑 停止旧容器...${NC}"
-docker-compose down 2>/dev/null || true
+$DOCKER_COMPOSE down 2>/dev/null || true
 echo -e "${GREEN}✅ 旧容器已停止${NC}"
 echo ""
 
 # 5. 构建并启动
 echo -e "${CYAN}🔨 构建并启动Docker容器...${NC}"
-docker-compose up -d --build
+$DOCKER_COMPOSE up -d --build
 
 # 6. 等待服务启动
 echo -e "${CYAN}⏳ 等待服务启动（30秒）...${NC}"
@@ -148,11 +161,7 @@ echo ""
 echo -e "${CYAN}✅ 验证部署...${NC}"
 
 # 检查容器状态
-if command -v docker-compose &> /dev/null; then
-    docker-compose ps
-else
-    docker compose ps
-fi
+$DOCKER_COMPOSE ps
 echo ""
 
 # 检查后端健康
@@ -162,7 +171,7 @@ if curl -f http://localhost:3001/api/health &> /dev/null; then
     curl -s http://localhost:3001/api/health | head -3
 else
     echo -e "${RED}❌ 后端服务启动失败${NC}"
-    echo -e "${YELLOW}查看日志: cd $PROJECT_DIR && docker-compose logs backend${NC}"
+    echo -e "${YELLOW}查看日志: cd $PROJECT_DIR && $DOCKER_COMPOSE logs backend${NC}"
 fi
 echo ""
 
@@ -189,15 +198,15 @@ echo -e "${CYAN}📌 项目目录:${NC}"
 echo -e "  ${GREEN}$PROJECT_DIR${NC}"
 echo ""
 echo -e "${CYAN}📌 常用命令:${NC}"
-echo -e "  查看日志: ${YELLOW}cd $PROJECT_DIR && docker-compose logs -f${NC}"
-echo -e "  重启服务: ${YELLOW}cd $PROJECT_DIR && docker-compose restart${NC}"
-echo -e "  停止服务: ${YELLOW}cd $PROJECT_DIR && docker-compose down${NC}"
-echo -e "  查看状态: ${YELLOW}cd $PROJECT_DIR && docker-compose ps${NC}"
+echo -e "  查看日志: ${YELLOW}cd $PROJECT_DIR && $DOCKER_COMPOSE logs -f${NC}"
+echo -e "  重启服务: ${YELLOW}cd $PROJECT_DIR && $DOCKER_COMPOSE restart${NC}"
+echo -e "  停止服务: ${YELLOW}cd $PROJECT_DIR && $DOCKER_COMPOSE down${NC}"
+echo -e "  查看状态: ${YELLOW}cd $PROJECT_DIR && $DOCKER_COMPOSE ps${NC}"
 echo ""
 echo -e "${CYAN}📌 更新代码:${NC}"
 echo -e "  ${YELLOW}cd $PROJECT_DIR${NC}"
 echo -e "  ${YELLOW}git pull origin main${NC}"
-echo -e "  ${YELLOW}docker-compose up -d --build${NC}"
+echo -e "  ${YELLOW}$DOCKER_COMPOSE up -d --build${NC}"
 echo ""
 
 exit 0
