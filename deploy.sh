@@ -1,164 +1,160 @@
 #!/bin/bash
 # ================================
-# Amazon评论分析系统 - 自动化部署脚本
+# Amazon评论分析系统 - 一键部署脚本
 # ================================
 
-set -e  # 遇到错误立即退出
-
-echo "🚀 开始部署 Amazon评论分析系统..."
+set -e
 
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+BLUE='\033[0;34m'
+NC='\033[0m'
 
 # 配置
-PROJECT_DIR="/opt/maijiaplug"
-BACKUP_DIR="/opt/maijiaplug-backups"
-GITHUB_REPO="your-username/maijiaplug"  # 修改为您的仓库地址
+PROJECT_DIR="/opt/amazon-review-analysis"
+GITHUB_REPO="lubei0612/amazon-review-analysis"
 
-# ===== 1. 检查环境 =====
-echo -e "${CYAN}📋 步骤1: 检查环境...${NC}"
+echo ""
+echo -e "${CYAN}╔════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║   Amazon评论分析系统 - 一键部署脚本      ║${NC}"
+echo -e "${CYAN}╚════════════════════════════════════════════╝${NC}"
+echo ""
 
-if ! command -v docker &> /dev/null; then
-    echo -e "${RED}❌ Docker未安装，请先安装Docker${NC}"
-    exit 1
-fi
-
-if ! command -v docker-compose &> /dev/null && ! command -v docker compose &> /dev/null; then
-    echo -e "${RED}❌ Docker Compose未安装${NC}"
-    exit 1
-fi
-
-echo -e "${GREEN}✅ Docker环境检查通过${NC}"
-
-# ===== 2. 备份当前.env文件 =====
-if [ -f "$PROJECT_DIR/.env" ]; then
-    echo -e "${CYAN}📋 步骤2: 备份现有配置...${NC}"
-    mkdir -p "$BACKUP_DIR"
-    cp "$PROJECT_DIR/.env" "$BACKUP_DIR/.env.backup.$(date +%Y%m%d_%H%M%S)"
-    echo -e "${GREEN}✅ 配置文件已备份${NC}"
-fi
-
-# ===== 3. 从GitHub拉取最新代码 =====
-echo -e "${CYAN}📋 步骤3: 从GitHub拉取最新代码...${NC}"
-
-if [ ! -d "$PROJECT_DIR" ]; then
-    echo "初次部署，克隆仓库..."
-    git clone "https://github.com/$GITHUB_REPO.git" "$PROJECT_DIR"
-else
+# 1. 克隆或更新项目
+if [ -d "$PROJECT_DIR" ]; then
+    echo -e "${CYAN}📦 更新项目代码...${NC}"
     cd "$PROJECT_DIR"
     
-    # 保存.env文件
-    if [ -f ".env" ]; then
-        cp .env /tmp/.env.backup
+    # 备份.env文件
+    if [ -f .env ]; then
+        cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
+        echo -e "${GREEN}✅ 已备份现有.env文件${NC}"
     fi
     
-    # 拉取最新代码
     git fetch origin
-    git reset --hard origin/main  # 或 origin/master
-    
-    # 恢复.env文件
-    if [ -f "/tmp/.env.backup" ]; then
-        cp /tmp/.env.backup .env
-        rm /tmp/.env.backup
-    fi
+    git reset --hard origin/main
+    echo -e "${GREEN}✅ 代码更新完成${NC}"
+else
+    echo -e "${CYAN}📦 克隆项目...${NC}"
+    sudo mkdir -p /opt
+    sudo chown $USER:$USER /opt
+    git clone "https://github.com/${GITHUB_REPO}.git" "$PROJECT_DIR"
+    cd "$PROJECT_DIR"
+    echo -e "${GREEN}✅ 项目克隆完成${NC}"
 fi
 
-cd "$PROJECT_DIR"
-echo -e "${GREEN}✅ 代码更新完成${NC}"
+echo ""
 
-# ===== 4. 处理环境变量 =====
-echo -e "${CYAN}📋 步骤4: 配置环境变量...${NC}"
-
-if [ ! -f ".env" ]; then
+# 2. 检查.env文件
+if [ ! -f .env ]; then
     echo -e "${YELLOW}⚠️  .env文件不存在，从模板创建...${NC}"
-    
-    if [ -f "env.template" ]; then
-        cp env.template .env
-        echo -e "${YELLOW}⚠️  请编辑 .env 文件并填写真实的API密钥${NC}"
-        echo -e "${YELLOW}⚠️  完成后再次运行此脚本${NC}"
-        exit 1
-    else
+    if [ ! -f env.template ]; then
         echo -e "${RED}❌ env.template文件不存在${NC}"
         exit 1
     fi
+    cp env.template .env
+    echo ""
+    echo -e "${RED}❌ 请先编辑 .env 文件并填写API密钥:${NC}"
+    echo -e "${YELLOW}   nano $PROJECT_DIR/.env${NC}"
+    echo ""
+    echo -e "${CYAN}必需配置:${NC}"
+    echo -e "  - APIFY_API_TOKEN"
+    echo -e "  - GEMINI_API_KEY"
+    echo ""
+    exit 1
 fi
 
-# 验证必需的环境变量
+# 3. 验证.env文件
+echo -e "${CYAN}📋 验证环境变量配置...${NC}"
 source .env
 
-if [ "$APIFY_API_TOKEN" == "your_apify_token_here" ] || [ -z "$APIFY_API_TOKEN" ]; then
+if [ "$APIFY_API_TOKEN" = "your_apify_token_here" ] || [ -z "$APIFY_API_TOKEN" ]; then
     echo -e "${RED}❌ APIFY_API_TOKEN 未配置${NC}"
     echo -e "${YELLOW}请编辑 $PROJECT_DIR/.env 文件并填写真实的API密钥${NC}"
     exit 1
 fi
 
-if [ "$GEMINI_API_KEY" == "your_gemini_api_key_here" ] || [ -z "$GEMINI_API_KEY" ]; then
+if [ "$GEMINI_API_KEY" = "your_gemini_api_key_here" ] || [ -z "$GEMINI_API_KEY" ]; then
     echo -e "${RED}❌ GEMINI_API_KEY 未配置${NC}"
     echo -e "${YELLOW}请编辑 $PROJECT_DIR/.env 文件并填写真实的API密钥${NC}"
     exit 1
 fi
 
 echo -e "${GREEN}✅ 环境变量验证通过${NC}"
+echo ""
 
-# ===== 5. 停止旧容器 =====
-echo -e "${CYAN}📋 步骤5: 停止旧容器...${NC}"
-docker-compose down || docker compose down || true
+# 4. 停止旧容器
+echo -e "${CYAN}🛑 停止旧容器...${NC}"
+docker-compose down 2>/dev/null || true
 echo -e "${GREEN}✅ 旧容器已停止${NC}"
+echo ""
 
-# ===== 6. 构建并启动新容器 =====
-echo -e "${CYAN}📋 步骤6: 构建并启动容器...${NC}"
-docker-compose up -d --build || docker compose up -d --build
+# 5. 构建并启动
+echo -e "${CYAN}🔨 构建并启动Docker容器...${NC}"
+docker-compose up -d --build
 
-# 等待服务启动
-echo "等待服务启动..."
-sleep 10
+# 6. 等待服务启动
+echo -e "${CYAN}⏳ 等待服务启动（30秒）...${NC}"
+sleep 30
+echo ""
 
-# ===== 7. 验证部署 =====
-echo -e "${CYAN}📋 步骤7: 验证部署...${NC}"
+# 7. 验证部署
+echo -e "${CYAN}✅ 验证部署...${NC}"
+
+# 检查容器状态
+if command -v docker-compose &> /dev/null; then
+    docker-compose ps
+else
+    docker compose ps
+fi
+echo ""
 
 # 检查后端健康
+echo -e "${CYAN}检查后端服务...${NC}"
 if curl -f http://localhost:3001/api/health &> /dev/null; then
     echo -e "${GREEN}✅ 后端服务运行正常${NC}"
+    curl -s http://localhost:3001/api/health | head -3
 else
     echo -e "${RED}❌ 后端服务启动失败${NC}"
-    docker-compose logs backend
-    exit 1
+    echo -e "${YELLOW}查看日志: cd $PROJECT_DIR && docker-compose logs backend${NC}"
 fi
+echo ""
 
 # 检查前端
+echo -e "${CYAN}检查前端服务...${NC}"
 if curl -f http://localhost:3002 &> /dev/null; then
     echo -e "${GREEN}✅ 前端服务运行正常${NC}"
 else
     echo -e "${YELLOW}⚠️  前端服务可能未启动（检查端口3002）${NC}"
 fi
+echo ""
 
-# ===== 8. 清理旧镜像 =====
-echo -e "${CYAN}📋 步骤8: 清理旧镜像...${NC}"
-docker image prune -f
-echo -e "${GREEN}✅ 清理完成${NC}"
-
-# ===== 9. 显示部署信息 =====
+# 显示完成信息
 echo ""
 echo -e "${GREEN}╔════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║        🎉 部署成功！                       ║${NC}"
+echo -e "${GREEN}║        🎉 部署完成！                       ║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "${CYAN}服务访问地址:${NC}"
+echo -e "${CYAN}📌 服务访问地址:${NC}"
 echo -e "  后端API: ${GREEN}http://localhost:3001${NC}"
 echo -e "  前端界面: ${GREEN}http://localhost:3002${NC}"
 echo ""
-echo -e "${CYAN}查看日志:${NC}"
-echo -e "  docker-compose logs -f backend"
-echo -e "  docker-compose logs -f frontend"
+echo -e "${CYAN}📌 项目目录:${NC}"
+echo -e "  ${GREEN}$PROJECT_DIR${NC}"
 echo ""
-echo -e "${CYAN}管理命令:${NC}"
-echo -e "  重启服务: docker-compose restart"
-echo -e "  停止服务: docker-compose down"
-echo -e "  查看状态: docker-compose ps"
+echo -e "${CYAN}📌 常用命令:${NC}"
+echo -e "  查看日志: ${YELLOW}cd $PROJECT_DIR && docker-compose logs -f${NC}"
+echo -e "  重启服务: ${YELLOW}cd $PROJECT_DIR && docker-compose restart${NC}"
+echo -e "  停止服务: ${YELLOW}cd $PROJECT_DIR && docker-compose down${NC}"
+echo -e "  查看状态: ${YELLOW}cd $PROJECT_DIR && docker-compose ps${NC}"
+echo ""
+echo -e "${CYAN}📌 更新代码:${NC}"
+echo -e "  ${YELLOW}cd $PROJECT_DIR${NC}"
+echo -e "  ${YELLOW}git pull origin main${NC}"
+echo -e "  ${YELLOW}docker-compose up -d --build${NC}"
 echo ""
 
 exit 0

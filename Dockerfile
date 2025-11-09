@@ -17,6 +17,10 @@ RUN npm ci --only=production && npm cache clean --force
 # 复制项目文件（排除node_modules和其他不必要的文件）
 COPY . .
 
+# 复制并设置entrypoint脚本
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # 创建日志目录
 RUN mkdir -p logs
 
@@ -26,6 +30,9 @@ EXPOSE 3001
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3001/api/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1); });"
+
+# 使用entrypoint脚本
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 # 启动命令
 CMD ["node", "server.js"]

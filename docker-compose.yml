@@ -12,18 +12,15 @@ services:
     restart: unless-stopped
     ports:
       - "3001:3001"
+    env_file:
+      - .env  # 从.env文件读取环境变量
     environment:
-      # AI分析服务
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      # 如果.env文件不存在，使用这些默认值
+      # 或者可以通过docker-compose命令行覆盖
       - GEMINI_BASE_URL=${GEMINI_BASE_URL:-https://aihubmix.com/v1}
-      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-pro}
-      - GEMINI_TEMPERATURE=${GEMINI_TEMPERATURE:-0.3}
-      - GEMINI_MAX_TOKENS=${GEMINI_MAX_TOKENS:-8000}
-      
-      # 爬虫服务（仅使用Apify）
-      - APIFY_API_TOKEN=${APIFY_API_TOKEN}
-      
-      # 服务器配置
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash-exp}
+      - GEMINI_TEMPERATURE=${GEMINI_TEMPERATURE:-0.7}
+      - GEMINI_MAX_TOKENS=${GEMINI_MAX_TOKENS:-16000}
       - PORT=3001
       - NODE_ENV=${NODE_ENV:-production}
       - LOG_LEVEL=${LOG_LEVEL:-info}
