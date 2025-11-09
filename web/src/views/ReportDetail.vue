@@ -326,10 +326,14 @@ async function downloadReport() {
 async function handleAddCompetitor(asin) {
   try {
     // 创建分析任务
-    const response = await fetch('/api/analyze', {
+    const response = await fetch('/api/tasks/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ asin, maxReviews: 100 })
+      body: JSON.stringify({ 
+        asin, 
+        reviewCount: 100,
+        source: 'competitor-analysis'
+      })
     })
     
     const data = await response.json()
