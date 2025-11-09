@@ -222,9 +222,22 @@ echo -e "${GREEN}╔════════════════════
 echo -e "${GREEN}║        🎉 部署完成！                       ║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════╝${NC}"
 echo ""
+
+# 自动检测服务器IP
+SERVER_IP=$(curl -s ifconfig.me || curl -s icanhazip.com || curl -s ipecho.net/plain || echo "YOUR_SERVER_IP")
+
 echo -e "${CYAN}📌 服务访问地址:${NC}"
-echo -e "  后端API: ${GREEN}http://localhost:8088${NC}"
-echo -e "  前端界面: ${GREEN}http://localhost:8089${NC}"
+if [ "$SERVER_IP" != "YOUR_SERVER_IP" ]; then
+    echo -e "  后端API: ${GREEN}http://${SERVER_IP}:8088${NC}"
+    echo -e "  前端界面: ${GREEN}http://${SERVER_IP}:8089${NC}"
+    echo -e "  健康检查: ${GREEN}http://${SERVER_IP}:8088/api/health${NC}"
+else
+    echo -e "  ${YELLOW}⚠️  无法自动检测服务器IP，请手动替换${NC}"
+    echo -e "  后端API: ${GREEN}http://YOUR_SERVER_IP:8088${NC}"
+    echo -e "  前端界面: ${GREEN}http://YOUR_SERVER_IP:8089${NC}"
+fi
+echo ""
+echo -e "${YELLOW}⚠️  重要: 请确保腾讯云安全组已开放 8088 和 8089 端口！${NC}"
 echo ""
 echo -e "${CYAN}📌 项目目录:${NC}"
 echo -e "  ${GREEN}$PROJECT_DIR${NC}"
