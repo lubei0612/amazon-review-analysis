@@ -142,10 +142,42 @@ fi
 echo -e "${GREEN}✅ 环境变量验证通过${NC}"
 echo ""
 
-# 4. 停止旧容器
-echo -e "${CYAN}🛑 停止旧容器...${NC}"
+# 4. 停止并清理旧容器
+echo -e "${CYAN}🛑 停止并清理旧容器...${NC}"
 $DOCKER_COMPOSE down 2>/dev/null || true
-echo -e "${GREEN}✅ 旧容器已停止${NC}"
+
+# 强制停止可能存在的容器（防止端口占用）
+echo -e "${CYAN}🔍 清理可能存在的容器...${NC}"
+docker stop amazon-review-backend amazon-review-frontend 2>/dev/null || true
+docker rm amazon-review-backend amazon-review-frontend 2>/dev/null || true
+
+# 查找并停止占用端口的容器
+echo -e "${CYAN}🔍 检查端口占用...${NC}"
+# 查找所有运行中的容器，检查端口映射
+for container_id in $(docker ps -q 2>/dev/null); do
+    port_mapping=$(docker port $container_id 2>/dev/null | grep -E ":(3001|3002)->" || true)
+    if [ -n "$port_mapping" ]; then
+        echo -e "${YELLOW}⚠️  发现占用端口的容器 $container_id，正在停止...${NC}"
+        docker stop $container_id 2>/dev/null || true
+        docker rm $container_id 2>/dev/null || true
+    fi
+done
+
+# 额外检查：使用 lsof 或 netstat 清理非 Docker 进程
+if command -v lsof &> /dev/null; then
+    if lsof -ti:3001 > /dev/null 2>&1; then
+        echo -e "${YELLOW}⚠️  端口 3001 被非 Docker 进程占用，正在清理...${NC}"
+        lsof -ti:3001 | xargs kill -9 2>/dev/null || true
+        sleep 1
+    fi
+    if lsof -ti:3002 > /dev/null 2>&1; then
+        echo -e "${YELLOW}⚠️  端口 3002 被非 Docker 进程占用，正在清理...${NC}"
+        lsof -ti:3002 | xargs kill -9 2>/dev/null || true
+        sleep 1
+    fi
+fi
+
+echo -e "${GREEN}✅ 清理完成${NC}"
 echo ""
 
 # 5. 构建并启动
