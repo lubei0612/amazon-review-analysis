@@ -1,33 +1,44 @@
 <template>
   <div class="module-container consumer-profile-module">
-    <!-- 标题栏 -->
-    <div class="module-header">
-      <div class="header-left">
-        <span class="module-icon">👥</span>
-        <h3 class="module-title">消费者画像</h3>
-      </div>
-      <div class="header-right">
-        <el-button size="small" @click="handleTranslate">
-          {{ isTranslated ? '还原' : '翻译' }}
-        </el-button>
-        <el-dropdown @command="handleDownload">
-          <el-button size="small">
-            下载 <el-icon><ArrowDown /></el-icon>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="xlsx">📊 下载模块数据</el-dropdown-item>
-              <el-dropdown-item command="png">🖼️ 下载图片</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
+    <!-- ✅ 空状态提示 -->
+    <div v-if="!props.data || !hasValidData" class="empty-state">
+      <el-empty description="暂无消费者画像数据">
+        <template #image>
+          <span style="font-size: 48px">👥</span>
+        </template>
+      </el-empty>
     </div>
 
-    <!-- 说明文字 -->
-    <div class="module-description">
-      通过对用户评论的分析，洞察消费者画像、使用习惯和行为特征
-    </div>
+    <!-- 正常内容 -->
+    <template v-else>
+      <!-- 标题栏 -->
+      <div class="module-header">
+        <div class="header-left">
+          <span class="module-icon">👥</span>
+          <h3 class="module-title">消费者画像</h3>
+        </div>
+        <div class="header-right">
+          <el-button size="small" @click="handleTranslate">
+            {{ isTranslated ? '还原' : '翻译' }}
+          </el-button>
+          <el-dropdown @command="handleDownload">
+            <el-button size="small">
+              下载 <el-icon><ArrowDown /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="xlsx">📊 下载模块数据</el-dropdown-item>
+                <el-dropdown-item command="png">🖼️ 下载图片</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </div>
+
+      <!-- 说明文字 -->
+      <div class="module-description">
+        通过对用户评论的分析，洞察消费者画像、使用习惯和行为特征
+      </div>
 
     <!-- ✅ 消费者画像总结 -->
     <div v-if="summary" class="profile-summary">
@@ -54,16 +65,16 @@
       </div>
     </div>
 
-    <!-- ✅ 原评论弹窗 -->
-    <ReviewDialog
-      v-model:visible="reviewDialogVisible"
-      :keyword="selectedKeyword"
-      :reviews="allReviews"
-      :title="dialogTitle"
-    />
+      <!-- ✅ 原评论弹窗 -->
+      <ReviewDialog
+        v-model:visible="reviewDialogVisible"
+        :keyword="selectedKeyword"
+        :reviews="allReviews"
+        :title="dialogTitle"
+      />
 
-    <!-- 4个堆叠柱状图 - 一行四列 -->
-    <div class="module-body">
+      <!-- 4个堆叠柱状图 - 一行四列 -->
+      <div class="module-body">
       <div class="charts-container-horizontal">
         <!-- Persona 人物角色 -->
         <div class="chart-wrapper-horizontal">
@@ -114,7 +125,47 @@
           <span class="negative-label">红色代表1～3星评论</span>
         </span>
       </div>
+
+      <!-- ✅ 原评论展示 - 类似Shulex -->
+      <div v-if="topFeatureReviews.length > 0" class="original-reviews-section">
+        <div class="reviews-title">
+          <span class="title-icon">💬</span>
+          提及到 "{{ topFeatureKeyword }}" 的话题，消费者最常见的原声如下
+        </div>
+        <div class="reviews-list">
+          <div 
+            v-for="(review, index) in topFeatureReviews" 
+            :key="index"
+            class="review-card"
+            @click="openReviewDialog('persona', topFeatureKeyword)"
+          >
+            <div class="review-content">
+              "{{ truncateText(review.content, 100) }}"
+            </div>
+            <div class="review-footer">
+              <div class="reviewer-avatar">
+                {{ review.author ? review.author.charAt(0).toUpperCase() : 'U' }}
+              </div>
+              <div class="reviewer-name">{{ review.author || 'Unknown' }}</div>
+              <div class="review-rating">
+                <el-rate 
+                  v-model="review.rating" 
+                  disabled 
+                  show-score 
+                  text-color="#ff9900"
+                  size="small"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="view-more-trigger" @click="openReviewDialog('persona', topFeatureKeyword)">
+          <span>查看更多原评论</span>
+          <el-icon><ArrowDown /></el-icon>
+        </div>
+      </div>
     </div>
+    </template>
   </div>
 </template>
 
@@ -129,7 +180,7 @@ import {
   LegendComponent
 } from 'echarts/components'
 import VChart from 'vue-echarts'
-import { ArrowDown, View } from '@element-plus/icons-vue'
+import { ArrowDown, View, ArrowRight } from '@element-plus/icons-vue'
 import * as XLSX from 'xlsx'
 import html2canvas from 'html2canvas'
 import ReviewDialog from './ReviewDialog.vue'
@@ -145,7 +196,8 @@ use([
 const props = defineProps({
   data: {
     type: Object,
-    required: true
+    required: false,  // ✅ 改为非必需，允许null
+    default: null
   },
   productName: {
     type: String,
@@ -157,12 +209,80 @@ const props = defineProps({
   }
 })
 
+// ✅ 检查是否有有效数据
+const hasValidData = computed(() => {
+  if (!props.data) return false
+  
+  const hasPersona = props.data.persona && props.data.persona.length > 0
+  const hasUsageTime = props.data.usageTime && props.data.usageTime.length > 0
+  const hasUsageLocation = props.data.usageLocation && props.data.usageLocation.length > 0
+  const hasBehavior = props.data.behavior && props.data.behavior.length > 0
+  
+  // 至少有一个维度有数据
+  return hasPersona || hasUsageTime || hasUsageLocation || hasBehavior
+})
+
 const isTranslated = ref(false)
 
 // ✅ 原评论弹窗相关
 const reviewDialogVisible = ref(false)
 const selectedKeyword = ref('')
 const dialogTitle = ref('')
+
+// ✅ 获取Top特征的关键词
+const topFeatureKeyword = computed(() => {
+  return summary.value?.topPersona || ''
+})
+
+// ✅ 获取原评论示例（使用AI返回的exampleReviews）
+const topFeatureReviews = computed(() => {
+  // 优先使用AI返回的exampleReviews
+  if (props.data?.exampleReviews && Array.isArray(props.data.exampleReviews)) {
+    return props.data.exampleReviews.slice(0, 3)
+  }
+  
+  // 降级方案：从allReviews中搜索（兼容旧数据）
+  if (!topFeatureKeyword.value || !props.allReviews || props.allReviews.length === 0) {
+    return []
+  }
+  
+  const keyword = topFeatureKeyword.value.toLowerCase()
+  const matchingReviews = props.allReviews.filter(review => {
+    const content = (review.content || review.body || '').toLowerCase()
+    return content.includes(keyword)
+  })
+  
+  // 优先显示高评分的评论
+  const sorted = matchingReviews.sort((a, b) => b.rating - a.rating)
+  return sorted.slice(0, 3).map(review => ({
+    rating: review.rating,
+    userName: review.author?.name || review.userName || '匿名用户',
+    content: review.content || review.body || '',
+    date: review.date
+  }))
+})
+
+// ✅ 截断文字
+function truncateText(text, maxLength) {
+  if (!text) return ''
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength) + '...'
+}
+
+// ✅ 格式化评论日期
+function formatReviewDate(dateString) {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24))
+  
+  if (diffDays === 0) return '今天'
+  if (diffDays === 1) return '昨天'
+  if (diffDays < 7) return `${diffDays}天前`
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}周前`
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)}个月前`
+  return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
+}
 
 // ✅ 计算消费者画像总结（最常提到的Top 1）
 const summary = computed(() => {
@@ -434,7 +554,7 @@ async function exportToPNG() {
   .profile-summary {
     margin: 20px 24px;
     padding: 20px 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1D9BF0 0%, #0084FF 100%);
     border-radius: 12px;
     color: white;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
@@ -557,6 +677,180 @@ async function exportToPNG() {
         border-radius: 4px;
         margin: 0 4px;
       }
+    }
+  }
+
+  // ✅ 原评论展示区域（对标Shulex）
+  .original-reviews-section {
+    margin: 24px;
+    padding: 24px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 12px;
+    border: 1px solid #fbbf24;
+
+    .original-reviews-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+
+      .header-icon {
+        font-size: 24px;
+      }
+
+      .header-text {
+        flex: 1;
+        font-size: 15px;
+        color: #78350f;
+        line-height: 1.5;
+
+        strong {
+          color: #92400e;
+          font-weight: 700;
+        }
+      }
+    }
+
+    .original-reviews-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .original-review-card {
+      padding: 16px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #fed7aa;
+      transition: all 0.2s;
+
+      &:hover {
+        border-color: #fb923c;
+        box-shadow: 0 4px 12px rgba(251, 146, 60, 0.15);
+      }
+
+      .review-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+
+        .review-author {
+          font-weight: 600;
+          color: #92400e;
+          font-size: 13px;
+        }
+
+        .review-date {
+          color: #9ca3af;
+          font-size: 12px;
+        }
+      }
+
+      .review-excerpt {
+        font-size: 14px;
+        color: #374151;
+        line-height: 1.7;
+        font-style: italic;
+        border-left: 3px solid #fbbf24;
+        padding-left: 12px;
+      }
+    }
+  }
+
+  // ✅ 旧版原评论样式（保留兼容）
+  .reviews-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .title-icon {
+      font-size: 20px;
+    }
+  }
+
+  .reviews-list {
+    display: grid;
+    gap: 16px;
+  }
+
+  .review-card {
+    padding: 16px 20px;
+    background: #fafbfc;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #f0f9ff;
+      border-color: #60a5fa;
+      box-shadow: 0 2px 8px rgba(96, 165, 250, 0.15);
+    }
+
+    .review-content {
+      font-size: 14px;
+      color: #374151;
+      line-height: 1.6;
+      margin-bottom: 12px;
+      font-style: italic;
+    }
+
+    .review-footer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .reviewer-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1D9BF0 0%, #0084FF 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .reviewer-name {
+        font-size: 13px;
+        color: #6b7280;
+        flex: 1;
+      }
+
+      .review-rating {
+        :deep(.el-rate) {
+          height: auto;
+        }
+      }
+    }
+  }
+
+  .view-more-trigger {
+    margin-top: 16px;
+    padding: 12px;
+    text-align: center;
+    color: #3b82f6;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    &:hover {
+      background: #eff6ff;
+      color: #2563eb;
     }
   }
 }

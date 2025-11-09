@@ -60,7 +60,7 @@ app.listen(PORT, () => {
   logger.info(`🚀 服务器运行在: http://localhost:${PORT}`)
   logger.info(`📌 环境: ${process.env.NODE_ENV || 'development'}`)
   logger.info(`🤖 AI Provider: Gemini 2.5 Pro`)
-  logger.info(`📡 Outscraper: ${process.env.OUTSCRAPER_API_KEY ? '✅ 已配置' : '❌ 未配置'}`)
+  logger.info(`📡 Apify: ${process.env.APIFY_API_TOKEN ? '✅ 已配置' : '❌ 未配置'}`)
   logger.info('═══════════════════════════════════════════════')
 })
 

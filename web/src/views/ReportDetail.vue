@@ -46,12 +46,12 @@
                 :alt="productData.productName"
                 class="product-main-image"
               />
-              <div class="product-info">
+                <div class="product-info">
                 <h1 class="product-title">{{ productData.productNameCn }}</h1>
-                <div class="product-meta">
-                  <span class="product-subtitle">{{ productData.productName }}</span>
-                  <span class="divider">|</span>
-                  <span class="asin-text">ASIN: {{ productData.asin }}</span>
+            <div class="product-meta">
+              <span class="product-subtitle">{{ productData.productName }}</span>
+              <span class="divider">|</span>
+              <span class="asin-text">ASIN: {{ productData.asin }}</span>
                   <span class="divider">|</span>
                   <span class="review-count">{{ productData.reviewCount }} 条评论</span>
                   <span v-if="productData.analyzedAt" class="divider">|</span>
@@ -70,31 +70,26 @@
         </div>
       </div>
 
-      <!-- 模块导航（吸顶效果） -->
-      <div class="module-nav" :class="{ 'is-fixed': navFixed }">
+      <!-- ✅ Tab导航 - 对标Shulex -->
+      <div class="tab-nav">
         <div class="container">
-          <div class="nav-items">
-            <a
-              v-for="item in navItems"
-              :key="item.id"
-              :href="`#${item.id}`"
-              :class="{ active: activeModule === item.id }"
-              @click.prevent="scrollToModule(item.id)"
-            >
-              {{ item.title }}
-            </a>
-          </div>
+          <el-tabs v-model="activeTab" class="report-tabs">
+            <el-tab-pane label="消费者洞察" name="insights"></el-tab-pane>
+            <el-tab-pane label="竞品分析" name="competitor"></el-tab-pane>
+          </el-tabs>
         </div>
       </div>
 
       <!-- 主内容区 -->
       <div class="page-content">
         <div class="container">
-          <!-- ✅ 消费者洞察 (7个维度) -->
-          <div class="insights-section">
-            <h2 class="section-title">📊 消费者洞察</h2>
-            <p class="section-description">基于AI分析评论数据，深度洞察消费者画像、使用场景、产品体验和购买动机</p>
-          </div>
+          <!-- ✅ Tab内容区 - 消费者洞察 -->
+          <div v-show="activeTab === 'insights'" class="tab-content-insights">
+            <!-- 消费者洞察标题 -->
+            <div class="insights-header">
+              <h2 class="tab-main-title">📊 消费者洞察</h2>
+              <p class="tab-main-description">基于AI分析评论数据，深度洞察消费者画像、使用场景、产品体验和购买动机</p>
+            </div>
 
           <!-- 消费者画像 -->
           <div id="consumer-profile" class="module-section">
@@ -141,20 +136,24 @@
               :product-name="productData.productNameCn"
             />
           </div>
-
-          <!-- ✅ 竞品分析 (独立板块) -->
-          <div class="competitor-section">
-            <h2 class="section-title">🎯 竞品分析</h2>
-            <p class="section-description">多维度对比竞品，发现市场机会和产品优势</p>
           </div>
 
-          <div id="competitor-analysis" class="module-section">
-            <CompetitorAnalysis
-              :current-product="currentProductForComparison"
-              :competitors="competitorsData"
-              @add-competitor="handleAddCompetitor"
-              @remove-competitor="handleRemoveCompetitor"
-            />
+          <!-- ✅ Tab内容区 - 竞品分析 -->
+          <div v-show="activeTab === 'competitor'" class="tab-content-competitor">
+            <!-- 竞品分析标题 -->
+            <div class="competitor-header">
+              <h2 class="tab-main-title">🎯 竞品分析</h2>
+              <p class="tab-main-description">多维度对比竞品，发现市场机会和产品优势</p>
+            </div>
+            
+            <div class="module-section">
+              <CompetitorAnalysis
+                :current-product="currentProductForComparison"
+                :competitors="competitorsData"
+                @add-competitor="handleAddCompetitor"
+                @remove-competitor="handleRemoveCompetitor"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -200,11 +199,22 @@ import appleSlicerData from '@/mock/apple-slicer-data.js'
 import laptopBackpackData from '@/mock/laptop-backpack-data.js'
 
 const route = useRoute()
-const productData = ref(earbudsData)
-const navFixed = ref(false)
-const activeModule = ref('consumer-profile')
-const navOffsetTop = ref(0)
+const productData = ref({
+  asin: '',
+  productName: '',
+  productNameCn: '',
+  productImage: '',
+  reviewCount: 0,
+  reviews: [],
+  consumerProfile: null,
+  usageScenarios: [],
+  starRatingImpact: null,
+  productExperience: { strengths: [], weaknesses: [] },
+  purchaseMotivation: [],
+  unmetNeeds: []
+}) // ✅ 不再默认使用earbuds数据
 const sidebarExpanded = ref(false) // 侧边栏展开状态
+const activeTab = ref('insights') // ✅ Tab状态：insights | competitor
 
 // ✅ 竞品数据
 const competitorsData = ref([])
@@ -231,30 +241,7 @@ const currentProductForComparison = computed(() => {
   }
 })
 
-// 模块导航项
-const navItems = [
-  { id: 'consumer-profile', title: '消费者画像' },
-  { id: 'usage-scenarios', title: '使用场景' },
-  { id: 'star-rating', title: '星级影响度' },
-  { id: 'product-experience', title: '产品体验' },
-  { id: 'purchase-motivation', title: '购买动机' },
-  { id: 'unmet-needs', title: '未被满足的需求' },
-  { id: 'competitor-analysis', title: '竞品分析' }
-]
-
-// 滚动到指定模块
-function scrollToModule(id) {
-  const element = document.getElementById(id)
-  if (element) {
-    const navHeight = 60 // 导航栏高度
-    const offsetTop = element.offsetTop - navHeight - 10
-    window.scrollTo({
-      top: offsetTop,
-      behavior: 'smooth'
-    })
-    activeModule.value = id
-  }
-}
+// ✅ 移除旧的模块导航逻辑，改用Tab
 
 // 处理账号点击
 function handleAccountClick() {
@@ -424,28 +411,7 @@ function handleRemoveCompetitor(asin) {
   }
 }
 
-// 处理滚动事件
-function handleScroll() {
-  const moduleNav = document.querySelector('.module-nav')
-  if (moduleNav && navOffsetTop.value === 0) {
-    navOffsetTop.value = moduleNav.offsetTop
-  }
-
-  // 检查导航是否应该固定
-  navFixed.value = window.scrollY > navOffsetTop.value
-
-  // 检查哪个模块在可视区域内
-  const scrollPosition = window.scrollY + 120
-  
-  for (let i = navItems.length - 1; i >= 0; i--) {
-    const item = navItems[i]
-    const element = document.getElementById(item.id)
-    if (element && element.offsetTop <= scrollPosition) {
-      activeModule.value = item.id
-      break
-    }
-  }
-}
+// ✅ 移除handleScroll，改用Tab导航
 
 onMounted(async () => {
   // ✅ 清除所有本地缓存，防止显示旧数据
@@ -491,24 +457,50 @@ onMounted(async () => {
         if (status === 'completed') {
           // ✅ 任务完成 - 必须有有效数据
           if (taskData.result && taskData.result.analysis) {
-            // ✅ 确保数据完整性
+            // ✅ 确保数据完整性（放宽检查，允许部分维度失败）
             const analysis = taskData.result.analysis
             
-            if (!analysis.consumerProfile || !analysis.usageScenarios) {
+            if (!analysis.consumerProfile) {
               loading.close()
-              throw new Error('分析数据不完整，请重新分析')
+              throw new Error('关键分析数据缺失（消费者画像），请重新分析')
             }
             
+            // ⚠️ 警告：如果使用场景为空
+            if (!analysis.usageScenarios || analysis.usageScenarios.length === 0) {
+              console.warn('⚠️ 使用场景数据为空，可能AI分析失败')
+            }
+            
+            // ✅ 明确赋值每个字段，确保数据结构正确
             productData.value = {
               asin: asin,
-              productName: taskData.result.meta?.productName || 'Amazon Product Analysis',
-              productNameCn: 'Amazon产品分析',
+              productName: taskData.result.meta?.productTitle || taskData.result.meta?.productName || 'Amazon Product Analysis',
+              productNameCn: taskData.result.meta?.productTitle || 'Amazon产品分析',
               productImage: taskData.result.meta?.productImage || taskData.productImage || '',
               reviewCount: taskData.result.reviews?.length || 0,
               analyzedAt: taskData.result.meta?.analyzedAt || taskData.createdAt || new Date().toISOString(),
-              reviews: taskData.result.reviews || [], // ✅ 添加评论数据
-              ...analysis
+              reviews: taskData.result.reviews || [],
+              // ✅ 明确赋值每个分析维度
+              consumerProfile: analysis.consumerProfile || null,
+              usageScenarios: analysis.usageScenarios || [],
+              starRatingImpact: analysis.starRatingImpact || null,
+              productExperience: {
+                positive: analysis.productExperience?.strengths || [],
+                negative: analysis.productExperience?.weaknesses || [],
+                strengths: analysis.productExperience?.strengths || [],
+                weaknesses: analysis.productExperience?.weaknesses || []
+              },
+              purchaseMotivation: analysis.purchaseMotivation || [],
+              unmetNeeds: analysis.unmetNeeds || []
             }
+            
+            // ✅ 调试日志
+            console.log('✅ 数据已加载:')
+            console.log('  - consumerProfile:', productData.value.consumerProfile ? 'OK' : 'NULL')
+            console.log('  - usageScenarios:', productData.value.usageScenarios?.length || 0, '条')
+            console.log('  - productExperience.strengths:', productData.value.productExperience?.strengths?.length || 0, '条')
+            console.log('  - productExperience.weaknesses:', productData.value.productExperience?.weaknesses?.length || 0, '条')
+            console.log('  - purchaseMotivation:', productData.value.purchaseMotivation?.length || 0, '条')
+            console.log('  - unmetNeeds:', productData.value.unmetNeeds?.length || 0, '条')
             taskCompleted = true
             loading.close()
             ElMessage.success(`分析完成！共分析 ${productData.value.reviewCount} 条评论`)
@@ -573,14 +565,11 @@ onMounted(async () => {
     }
   }
 
-  // 添加滚动监听
-  window.addEventListener('scroll', handleScroll)
-  handleScroll() // 初始化
+  // ✅ 移除滚动监听，改用Tab导航
 })
 
 onUnmounted(() => {
-  // 移除滚动监听
-  window.removeEventListener('scroll', handleScroll)
+  // 清理工作
 })
 </script>
 
@@ -800,60 +789,48 @@ onUnmounted(() => {
 }
 
 // 模块导航
-.module-nav {
+// ✅ Tab导航样式
+.tab-nav {
   background: white;
   border-bottom: 1px solid #e5e7eb;
-  transition: all 0.3s ease;
-  z-index: 90;
-
-  &.is-fixed {
-    position: fixed;
+  position: sticky;
     top: 0;
-    left: 200px;
-    right: 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transition: left 0.3s ease;
-  }
+  z-index: 100;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
-  .nav-items {
-    display: flex;
-    gap: 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  :deep(.report-tabs) {
+    .el-tabs__header {
+      margin: 0;
+      border-bottom: none;
+    }
 
-    &::-webkit-scrollbar {
+    .el-tabs__nav-wrap::after {
       display: none;
     }
 
-    a {
-      flex-shrink: 0;
-      padding: 16px 24px;
-      color: #6b7280;
-      text-decoration: none;
-      font-size: 14px;
+    .el-tabs__item {
+      font-size: 16px;
       font-weight: 500;
-      border-bottom: 3px solid transparent;
+      padding: 0 24px;
+      height: 56px;
+      line-height: 56px;
+      color: #6b7280;
       transition: all 0.2s;
-      white-space: nowrap;
 
       &:hover {
-        color: #374151;
-        background: #f9fafb;
+        color: #3b82f6;
       }
 
-      &.active {
-        color: #2563eb;
-        border-bottom-color: #2563eb;
-        background: #eff6ff;
+      &.is-active {
+        color: #3b82f6;
+        font-weight: 600;
       }
     }
-  }
-}
 
-// 当侧边栏收起时，调整模块导航位置
-.sidebar-collapsed {
-  .module-nav.is-fixed {
-    left: 64px;
+    .el-tabs__active-bar {
+      height: 3px;
+      background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+    }
   }
 }
 
@@ -868,16 +845,16 @@ onUnmounted(() => {
   margin-bottom: 24px;
 }
 
-// ✅ 板块标题样式
-.insights-section,
-.competitor-section {
+// ✅ Tab内容区标题
+.insights-header,
+.competitor-header {
   margin: 32px 0 24px;
   padding: 24px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
 
-  .section-title {
+  .tab-main-title {
     font-size: 24px;
     font-weight: 700;
     color: white;
@@ -887,7 +864,7 @@ onUnmounted(() => {
     gap: 8px;
   }
 
-  .section-description {
+  .tab-main-description {
     font-size: 14px;
     color: rgba(255, 255, 255, 0.9);
     margin: 0;
@@ -895,23 +872,23 @@ onUnmounted(() => {
   }
 }
 
-.competitor-section {
+.competitor-header {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   box-shadow: 0 4px 12px rgba(240, 147, 251, 0.2);
 }
 
 // ✅ 响应式
 @media (max-width: 768px) {
-  .insights-section,
-  .competitor-section {
+  .insights-header,
+  .competitor-header {
     margin: 24px 0 16px;
     padding: 16px;
 
-    .section-title {
+    .tab-main-title {
       font-size: 20px;
     }
 
-    .section-description {
+    .tab-main-description {
       font-size: 13px;
     }
   }

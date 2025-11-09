@@ -588,24 +588,49 @@ async function pollTaskStatus(taskId, report) {
 // 加载报告列表
 async function loadReports() {
   try {
-    // TODO: 从后端API获取历史报告列表
-    // const response = await fetch('http://localhost:3001/api/tasks')
-    // const data = await response.json()
-    // if (data.success) {
-    //   reports.value = data.data.map(task => ({
-    //     id: task.taskId,
-    //     name: task.asin,
-    //     asin: task.taskId,
-    //     totalAsin: task.result?.reviews?.length || 0,
-    //     createdAt: new Date(task.createdAt).toLocaleString('zh-CN'),
-    //     isDemo: false,
-    //     status: task.status
-    //   }))
-    // }
-    
-    console.log('报告列表已加载（当前为Mock数据）')
+    // ✅ 从后端API获取历史报告列表
+    const response = await fetch('http://localhost:3001/api/tasks')
+    const data = await response.json()
+    if (data.success && data.data && data.data.length > 0) {
+      // 合并后端任务和Demo报告
+      const backendTasks = data.data.map(task => ({
+        id: task.taskId,
+        name: task.asin ? `${task.asin} - ${task.status}` : task.taskId.slice(0, 8),
+        asin: task.taskId,
+        realAsin: task.asin,
+        totalAsin: task.result?.reviews?.length || 0,
+        createdAt: new Date(task.createdAt).toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }).replace(/\//g, '/'),
+        isDemo: false,
+        status: task.status === 'completed' ? 'completed' : 
+                task.status === 'failed' ? 'failed' : 'analyzing',
+        progress: task.progress || 0,
+        productImage: task.result?.meta?.productImage
+      }))
+      
+      // 后端任务 + Demo报告
+      reports.value = [...backendTasks, ...reports.value.filter(r => r.isDemo)]
+      
+      // ✅ 为进行中的任务启动轮询
+      backendTasks.forEach(task => {
+        if (task.status === 'analyzing') {
+          pollTaskStatus(task.asin, task)
+        }
+      })
+      
+      console.log(`报告列表已加载：${backendTasks.length}个后端任务 + ${reports.value.filter(r => r.isDemo).length}个Demo`)
+    } else {
+      console.log('报告列表已加载（仅显示Demo数据）')
+    }
   } catch (error) {
     console.error('加载报告列表失败:', error)
+    ElMessage.warning('加载报告列表失败，仅显示Demo报告')
   }
 }
 

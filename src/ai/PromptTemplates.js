@@ -166,6 +166,64 @@ ${reviewText}
       "positiveCount": 52,
       "negativeCount": 9
     }
+  ],
+  "exampleReviews": [
+    {
+      "rating": 5,
+      "userName": "John Smith",
+      "content": "My son loves this product! He uses it every day for his homework.",
+      "dimension": "persona",
+      "keyword": "Son"
+    },
+    {
+      "rating": 4,
+      "userName": "Mary Johnson",
+      "content": "I use it in my office every day. Very convenient and reliable!",
+      "dimension": "usageLocation",
+      "keyword": "Office"
+    },
+    {
+      "rating": 5,
+      "userName": "David Lee",
+      "content": "Perfect for listening to music while working out at the gym.",
+      "dimension": "behavior",
+      "keyword": "Listening to Music"
+    },
+    {
+      "rating": 2,
+      "userName": "Sarah Brown",
+      "content": "Battery died after just 3 months of daily use. Very disappointed.",
+      "dimension": "usageTime",
+      "keyword": "Daily Use"
+    },
+    {
+      "rating": 5,
+      "userName": "Michael Chen",
+      "content": "My wife uses it every evening. She says it's the best gift ever!",
+      "dimension": "persona",
+      "keyword": "Wife"
+    },
+    {
+      "rating": 3,
+      "userName": "Lisa Wang",
+      "content": "Works okay at home, but has connection issues when I take it outdoors.",
+      "dimension": "usageLocation",
+      "keyword": "Outdoor"
+    },
+    {
+      "rating": 4,
+      "userName": "Tom Wilson",
+      "content": "Great for weekend projects and DIY work. Very reliable and durable.",
+      "dimension": "usageTime",
+      "keyword": "Weekend"
+    },
+    {
+      "rating": 5,
+      "userName": "Emily Davis",
+      "content": "My daughter uses it for her online classes. Crystal clear audio quality!",
+      "dimension": "persona",
+      "keyword": "Daughter"
+    }
   ]
 }
 
@@ -174,31 +232,104 @@ ${reviewText}
 1. **人群特征（persona）** - ⚠️ 必须返回5个以上：
    - keyword: 英文关键词（如 "Son", "Daughter", "Wife", "Husband", "Parents"）
    - keywordCn: 中文翻译（如 "儿子", "女儿", "妻子", "丈夫", "父母"）
-   - positiveCount: 4-5星评论中提及次数
-   - negativeCount: 1-3星评论中提及次数
+   - positiveCount: 4-5星评论中提及次数（⚠️ 必须是整数，即使为0也要返回0而非null）
+   - negativeCount: 1-3星评论中提及次数（⚠️ 必须是整数，即使为0也要返回0而非null）
    - **必须至少返回5个人群特征**
+   - **每个关键词必须同时有positiveCount和negativeCount，不允许只有其中一个**
 
 2. **使用时刻（usageTime）** - ⚠️ 必须返回5个以上：
    - keyword: 英文关键词（如 "Daily Use", "Weekend", "Evening", "Morning"）
    - keywordCn: 中文翻译（如 "日常使用", "周末", "晚上", "早晨"）
-   - positiveCount: 4-5星评论中提及次数
-   - negativeCount: 1-3星评论中提及次数
+   - positiveCount: 4-5星评论中提及次数（⚠️ 必须是整数，即使为0也要返回0而非null）
+   - negativeCount: 1-3星评论中提及次数（⚠️ 必须是整数，即使为0也要返回0而非null）
    - **必须至少返回5个使用时刻**
+   - **每个关键词必须同时有positiveCount和negativeCount，不允许只有其中一个**
 
 3. **使用地点（usageLocation）** - ⚠️ 必须返回5个以上：
    - keyword: 英文关键词（如 "Home", "Office", "Gym", "Outdoor"）
    - keywordCn: 中文翻译（如 "家中", "办公室", "健身房", "户外"）
-   - positiveCount: 4-5星评论中提及次数
-   - negativeCount: 1-3星评论中提及次数
+   - positiveCount: 4-5星评论中提及次数（⚠️ 必须是整数，即使为0也要返回0而非null）
+   - negativeCount: 1-3星评论中提及次数（⚠️ 必须是整数，即使为0也要返回0而非null）
    - **必须至少返回5个使用地点**
+   - **每个关键词必须同时有positiveCount和negativeCount，不允许只有其中一个**
    - ⚠️ 如果评论中没有明确提到，根据产品特性推测合理地点
 
 4. **行为特征（behavior）** - ⚠️ 必须返回5个以上：
    - keyword: 英文关键词（如 "Listening to Music", "Working", "Exercising"）
    - keywordCn: 中文翻译（如 "听音乐", "工作", "锻炼"）
-   - positiveCount: 4-5星评论中提及次数
-   - negativeCount: 1-3星评论中提及次数
+   - positiveCount: 4-5星评论中提及次数（⚠️ 必须是整数，即使为0也要返回0而非null）
+   - negativeCount: 1-3星评论中提及次数（⚠️ 必须是整数，即使为0也要返回0而非null）
    - **必须至少返回5个行为特征**
+   - **每个关键词必须同时有positiveCount和negativeCount，不允许只有其中一个**
+
+5. **原评论示例（exampleReviews）** - ⚠️ 新增要求：
+   - 必须返回8条真实的评论示例（展示更丰富的用户反馈）
+   - 每条评论必须包含：
+     * rating: 评分（1-5）
+     * userName: 评论者姓名
+     * content: 评论内容摘要（50-100字）
+     * dimension: 所属维度（"persona" | "usageTime" | "usageLocation" | "behavior"）
+     * keyword: 关联的关键词（英文，必须是上述四个维度中的某个keyword）
+   - 评论分布建议：5条正面（4-5星）+ 3条中性/负面（1-3星），覆盖不同维度
+   - 示例格式：
+     [
+       {
+         "rating": 5,
+         "userName": "John Smith",
+         "content": "My son loves this product! He uses it every day for his homework.",
+         "dimension": "persona",
+         "keyword": "Son"
+       },
+       {
+         "rating": 4,
+         "userName": "Mary Johnson",
+         "content": "I use it in my office every day. Very convenient and reliable!",
+         "dimension": "usageLocation",
+         "keyword": "Office"
+       },
+       {
+         "rating": 5,
+         "userName": "David Lee",
+         "content": "Perfect for listening to music while working out at the gym.",
+         "dimension": "behavior",
+         "keyword": "Listening to Music"
+       },
+       {
+         "rating": 2,
+         "userName": "Sarah Brown",
+         "content": "Battery died after just 3 months of daily use. Very disappointed.",
+         "dimension": "usageTime",
+         "keyword": "Daily Use"
+       },
+       {
+         "rating": 5,
+         "userName": "Michael Chen",
+         "content": "My wife uses it every evening. She says it's the best gift ever!",
+         "dimension": "persona",
+         "keyword": "Wife"
+       },
+       {
+         "rating": 3,
+         "userName": "Lisa Wang",
+         "content": "Works okay at home, but has connection issues when I take it outdoors.",
+         "dimension": "usageLocation",
+         "keyword": "Outdoor"
+       },
+       {
+         "rating": 4,
+         "userName": "Tom Wilson",
+         "content": "Great for weekend projects and DIY work. Very reliable and durable.",
+         "dimension": "usageTime",
+         "keyword": "Weekend"
+       },
+       {
+         "rating": 5,
+         "userName": "Emily Davis",
+         "content": "My daughter uses it for her online classes. Crystal clear audio quality!",
+         "dimension": "persona",
+         "keyword": "Daughter"
+       }
+     ]
 
 **弃用字段说明（以下字段已不再使用）：**
 
@@ -337,13 +468,14 @@ XX. **性别比例识别（genderRatio）** - ⚠️ 最重要的分析维度：
 - 确保每个维度都有至少5个数据点
 
 **⚠️ 最终检查（必须通过）：**
-1. ✅ persona: 至少5个，每个有keyword/keywordCn/positiveCount/negativeCount
-2. ✅ usageTime: 至少5个，每个有keyword/keywordCn/positiveCount/negativeCount
-3. ✅ **usageLocation: 必须至少5个，不允许为空数组或"数据不足"**
-4. ✅ **behavior: 必须至少5个，每个有keyword/keywordCn/positiveCount/negativeCount**
-5. ✅ positiveCount和negativeCount必须是整数，不能是小数或百分比
+1. ✅ persona: 至少5个，每个有keyword/keywordCn/positiveCount/negativeCount（都必须是整数，不能为null）
+2. ✅ usageTime: 至少5个，每个有keyword/keywordCn/positiveCount/negativeCount（都必须是整数，不能为null）
+3. ✅ **usageLocation: 必须至少5个，不允许为空数组或"数据不足"，每个有keyword/keywordCn/positiveCount/negativeCount（都必须是整数，不能为null）**
+4. ✅ **behavior: 必须至少5个，每个有keyword/keywordCn/positiveCount/negativeCount（都必须是整数，不能为null）**
+5. ✅ positiveCount和negativeCount必须是整数，不能是小数或百分比或null，即使为0也要返回0
+6. ✅ **exampleReviews: 必须返回8条评论，每条必须有rating/userName/content/dimension/keyword字段**
 
-**如果任何维度为空或少于5个，系统会报错！请务必返回真实数据！**
+**如果任何维度为空或少于5个，或者exampleReviews少于8条，系统会报错！请务必返回真实数据！**
 
 请仔细分析评论内容，提取真实的消费者画像特征。`
   }
@@ -363,49 +495,112 @@ XX. **性别比例识别（genderRatio）** - ⚠️ 最重要的分析维度：
 评论数据（共${reviews.length}条，分析前100条）：
 ${reviewText}
 
-返回JSON格式（直接返回数组，不需要scenarios包装）：
-[
-  {
-    "name": "零食准备",
-    "percentage": 35,
-    "description": "用户将产品用于快速制作健康零食，特别是为孩子准备苹果片",
-    "reason": "许多用户提到该产品在快速切片苹果时的有效性，特别是对于儿童和膳食准备方面的有效性。这表明它已成为家庭零食准备的实用工具"
-  },
-  {
-    "name": "家庭日常",
-    "percentage": 28,
-    "description": "家庭日常使用，简化水果处理流程",
-    "reason": "一些评论强调，该产品非常适合家庭，特别是为儿童制作苹果片"
-  },
-  {
-    "name": "聚会活动",
-    "percentage": 20,
-    "description": "在聚会或活动中快速准备水果拼盘",
-    "reason": "用户提到在聚会时使用，效率高"
-  },
-  {
-    "name": "送礼",
-    "percentage": 12,
-    "description": "作为礼物送给亲友",
-    "reason": "部分用户购买后作为礼物赠送"
-  },
-  {
-    "name": "烘焙制作",
-    "percentage": 5,
-    "description": "用于烘焙前的苹果处理",
-    "reason": "少数用户用于制作苹果派等烘焙食品"
-  }
-]
+**严格的JSON输出格式（必须遵守）：**
+
+{
+  "scenarios": [
+    {
+      "name": "零食准备",
+      "percentage": 35.0,
+      "count": 145,
+      "description": "用户将产品用于快速制作健康零食，特别是为孩子准备苹果片",
+      "reason": "许多用户提到该产品在快速切片苹果时的有效性，特别是对于儿童和膳食准备方面的有效性。这表明它已成为家庭零食准备的实用工具。"
+    },
+    {
+      "name": "家庭日常",
+      "percentage": 28.0,
+      "count": 98,
+      "description": "家庭日常使用，简化水果处理流程",
+      "reason": "一些评论强调，该产品非常适合家庭，特别是为儿童制作苹果片，让家庭日常生活更加便捷高效。"
+    },
+    {
+      "name": "健康饮食",
+      "percentage": 15.0,
+      "count": 52,
+      "description": "帮助用户保持健康饮食习惯",
+      "reason": "用户反馈该产品让他们更愿意吃水果，有助于养成健康饮食习惯，特别是对于关注健康的人群。"
+    },
+    {
+      "name": "节省时间",
+      "percentage": 10.0,
+      "count": 35,
+      "description": "快速完成切片工作，提高效率",
+      "reason": "忙碌的用户强调该产品大大节省了厨房准备时间，让他们能够更快速地完成食材处理工作。"
+    },
+    {
+      "name": "儿童教育",
+      "percentage": 5.0,
+      "count": 18,
+      "description": "让孩子参与食物准备，培养独立能力",
+      "reason": "部分家长提到让孩子自己使用该产品，培养孩子的独立性和生活技能，寓教于乐。"
+    },
+    {
+      "name": "送礼佳品",
+      "percentage": 3.0,
+      "count": 12,
+      "description": "作为礼物送给亲友，实用又贴心",
+      "reason": "用户将该产品作为礼物送给亲友，认为实用且贴心，适合各种节日和场合。"
+    },
+    {
+      "name": "聚会派对",
+      "percentage": 2.0,
+      "count": 8,
+      "description": "为聚会准备食物，方便快捷",
+      "reason": "在家庭聚会或派对时，用户使用该产品快速准备水果拼盘，方便招待客人。"
+    },
+    {
+      "name": "办公室零食",
+      "percentage": 1.0,
+      "count": 4,
+      "description": "在办公室使用，准备健康工作餐",
+      "reason": "部分上班族在办公室使用，随时准备新鲜健康的水果零食，提升工作间隙的生活品质。"
+    },
+    {
+      "name": "户外郊游",
+      "percentage": 0.5,
+      "count": 2,
+      "description": "野餐或郊游时携带使用",
+      "reason": "少数用户提到在户外活动时携带使用，为郊游野餐增添便利。"
+    },
+    {
+      "name": "烹饪辅助",
+      "percentage": 0.3,
+      "count": 1,
+      "description": "烘焙或烹饪时使用",
+      "reason": "烘焙爱好者在制作苹果派等甜点时使用该产品，简化食材处理步骤。"
+    },
+    {
+      "name": "餐厅使用",
+      "percentage": 0.2,
+      "count": 1,
+      "description": "小型餐厅或咖啡店使用",
+      "reason": "极少数餐饮从业者购买用于商业场景，提升厨房效率。"
+    }
+  ]
+}
+
+⚠️ **JSON格式要求：**
+- 必须用 {"scenarios": [...]} 包装数组
+- percentage必须是数字类型（如35.0），不是字符串
+- count必须是整数类型（如145），表示该场景在评论中的具体提及次数
+- name、description、reason都是字符串类型
+- 确保JSON完整，不能截断
 
 关键要求：
 1. 【必须中文输出】所有字段必须使用中文
 2. 【字段名】name必须是3-10字符的中文短标题（如"零食准备"、"家庭日常"、"送礼"）
 3. 【百分比计算】percentage是该场景在所有场景中的实际占比
    - 计算方式：(该场景提及次数 / 所有场景总提及次数) × 100
-   - 注意：只返回前5个最重要的场景，但百分比是相对于所有发现的场景计算的
-   - 因此前5个的百分比加起来通常在60-80%，剩余的20-40%在其他未返回的场景中
-4. description是场景的简短中文描述
-5. reason是你的深度中文分析（为什么用户在这个场景使用）
+   - 注意：返回前10-15个最重要的场景（对标Shulex）
+   - 百分比是相对于所有发现的场景计算的
+   - 因此前10个的百分比加起来通常在60-80%，剩余的20-40%在其他未返回的场景中
+4. 【新增字段】count是该场景的具体提及次数（整数），方便前端显示"XX% (XX条)"格式
+5. description是场景的简短中文描述
+6. 【原因限制】reason是你的深度中文分析（为什么用户在这个场景使用）
+   - ⚠️ **reason字段必须控制在200字以内**
+   - 要求：简洁清晰、言简意赅、抓住核心要点
+   - 避免冗长啰嗦的描述，每句话都要有信息量
+   - 如果原因很长，请提炼最关键的信息
 
 ⚠️ **必须返回至少10-15个使用场景（对标Shulex）！**
 - Shulex通常返回10-20个场景，我们也要做到这个水平
@@ -418,36 +613,168 @@ ${reviewText}
   }
 
   /**
-   * 3. 星级影响度分析（暂时不用）
+   * 3. 星级影响度分析（深度版本）
    */
   static getStarRatingImpactPrompt(reviews) {
-    const reviewText = reviews.map(r => 
-      `${r.rating}星 | ${r.title} | ${r.body || r.content || ''}`
+    const reviewText = reviews.slice(0, 200).map((r, i) => 
+      `[${i+1}] ${r.rating}星 | ${r.title} | ${r.body || r.content || ''}`
     ).join('\n')
 
-    return `分析不同星级评论的关注点差异。
+    return `你是一位专业的评论分析师。请基于以下Amazon产品评论，深度分析不同星级用户的关注点差异。
 
-评论数据：
+评论数据（共${reviews.length}条，分析前200条）：
 ${reviewText}
 
-返回JSON格式：
+**严格的JSON输出格式（必须遵守）：**
+
 {
   "ratingDistribution": {
-    "5star": 60,
-    "4star": 25,
-    "3star": 10,
-    "2star": 3,
-    "1star": 2
+    "5star": 45.5,
+    "4star": 28.3,
+    "3star": 15.2,
+    "2star": 6.5,
+    "1star": 4.5
   },
   "keyFactors": [
     {
-      "factor": "易用性",
-      "positiveImpact": 80,
-      "negativeImpact": 10,
-      "reason": "易用性是影响评分的最关键因素"
+      "factor": "性能强劲",
+      "factorEn": "Strong Performance",
+      "rating": 5,
+      "sentiment": "positive",
+      "percentage": 42.5,
+      "reason": "5星用户普遍赞扬产品性能出色，速度快，运行流畅。"
+    },
+    {
+      "factor": "续航优秀",
+      "factorEn": "Excellent Battery Life",
+      "rating": 5,
+      "sentiment": "positive",
+      "percentage": 35.2,
+      "reason": "5星用户强调电池续航时间长，满足全天使用需求。"
+    },
+    {
+      "factor": "屏幕出色",
+      "factorEn": "Excellent Display",
+      "rating": 5,
+      "sentiment": "positive",
+      "percentage": 28.8,
+      "reason": "5星用户喜欢屏幕显示效果，色彩鲜艳，清晰度高。"
+    },
+    {
+      "factor": "价格合理",
+      "factorEn": "Good Value",
+      "rating": 4,
+      "sentiment": "positive",
+      "percentage": 32.1,
+      "reason": "4星用户认为性价比不错，虽有小瑕疵但整体满意。"
+    },
+    {
+      "factor": "存在小瑕疵",
+      "factorEn": "Minor Flaws",
+      "rating": 4,
+      "sentiment": "negative",
+      "percentage": 25.5,
+      "reason": "4星用户提到一些小问题，如细节不够完美，但不影响使用。"
+    },
+    {
+      "factor": "功能一般",
+      "factorEn": "Average Features",
+      "rating": 3,
+      "sentiment": "negative",
+      "percentage": 28.9,
+      "reason": "3星用户认为功能一般，没有特别亮点，中规中矩。"
+    },
+    {
+      "factor": "质量问题",
+      "factorEn": "Quality Issues",
+      "rating": 2,
+      "sentiment": "negative",
+      "percentage": 35.6,
+      "reason": "2星用户反映产品存在质量问题，如容易损坏、做工粗糙。"
+    },
+    {
+      "factor": "完全不能用",
+      "factorEn": "Unusable",
+      "rating": 1,
+      "sentiment": "negative",
+      "percentage": 42.3,
+      "reason": "1星用户表示产品完全不能使用，要么损坏要么功能严重缺陷。"
+    },
+    {
+      "factor": "售后差",
+      "factorEn": "Poor After-sales",
+      "rating": 1,
+      "sentiment": "negative",
+      "percentage": 28.7,
+      "reason": "1星用户抱怨售后服务差，问题无法解决，退换货困难。"
+    },
+    {
+      "factor": "与描述不符",
+      "factorEn": "Not as Described",
+      "rating": 2,
+      "sentiment": "negative",
+      "percentage": 25.4,
+      "reason": "2星用户表示产品与描述或图片不符，实际效果大打折扣。"
     }
   ]
-}`
+}
+
+⚠️ **JSON格式要求：**
+- ratingDistribution: 5个星级的评论分布百分比（加起来=100）
+- keyFactors: 所有星级的关注点数组（不是分组对象）
+- 每个关注点必须包含：factor（中文）、factorEn（英文）、rating（1-5）、sentiment（positive/negative）、percentage（占比）、reason（原因）
+- 确保JSON完整，不能截断
+
+关键要求：
+1. **ratingDistribution** - 星级分布：
+   - 统计每个星级的评论占比
+   - 5star + 4star + 3star + 2star + 1star = 100.0
+   - 使用百分比格式（如45.5），不是计数
+
+2. **keyFactors** - 关注点列表（⚠️ 必须至少50条，覆盖所有星级）：
+   - factor: 中文关注点名称（3-10字，如"性能强劲"、"质量问题"）
+   - factorEn: 英文翻译（如"Strong Performance"、"Quality Issues"）
+   - rating: 该关注点对应的星级（1, 2, 3, 4, 或 5）
+   - sentiment: 情感倾向
+     * "positive" - 正向关注点（优点、赞扬）
+     * "negative" - 负向关注点（缺点、抱怨）
+   - percentage: 该关注点在对应星级评论中的提及占比（0-100）
+   - reason: 简短的中文说明（为什么该星级用户关注这个，50-100字）
+
+3. **⚠️ 数据量强制要求（违反此项视为分析失败）**：
+   - **keyFactors数组必须≥50个元素**（这是最低要求，建议60-80个）
+   - 5星：至少10个关注点（通常是positive，偶尔有negative如"价格稍贵"）
+   - 4星：至少10个关注点（正负向混合，如"整体不错但有小瑕疵"）
+   - 3星：至少10个关注点（主要是negative，偶尔有positive如"某个功能还行"）
+   - 2星：至少10个关注点（主要是negative）
+   - 1星：至少10个关注点（几乎全是negative）
+
+4. **情感倾向分配逻辑**：
+   - 5星：主要positive（约90%），少量negative（如"价格稍贵"、"包装一般"）
+   - 4星：正负混合，positive略多（约60% positive, 40% negative）
+   - 3星：主要negative（约70%），少量positive（约30%）
+   - 2星：主要negative（约85%），极少positive（约15%）
+   - 1星：几乎全是negative（约95%），极少positive（约5%，如"包装还行"）
+
+5. **数据真实性与扩写策略**：
+   - **优先级1**：基于评论内容真实提取关注点
+   - **优先级2**：如果某星级评论较少（<10条），必须通过以下方式扩写到10+关注点：
+     * 从其他星级的评论推测该星级可能的关注点
+     * 细分已有关注点（如"质量"可拆分为"做工质量"、"材料质量"、"耐用性"）
+     * 对比分析不同星级的差异，推测缺失星级的关注点
+   - **优先级3**：合理推测产品类别的通用关注点（如电子产品→性能、续航、屏幕等）
+   - **底线**：每个星级必须有10个关注点，总计必须≥50个
+
+⚠️ **最终检查（必须通过）：**
+1. ✅ ratingDistribution: 5个星级百分比之和 = 100.0
+2. ✅ keyFactors: 至少50条，每条有完整的factor/factorEn/rating/sentiment/percentage/reason
+3. ✅ 每个星级（1-5）至少有10个关注点
+4. ✅ sentiment只能是"positive"或"negative"，不能是其他值
+5. ✅ rating只能是1, 2, 3, 4, 或 5
+
+**如果keyFactors少于50条，或任何星级少于10个关注点，系统会报错！请务必返回完整数据！**
+
+请仔细分析评论内容，提取真实的星级关注点差异。`
   }
 
   /**
@@ -467,45 +794,53 @@ ${reviewText}
 返回JSON格式（直接返回数组，不需要strengths包装）：
 [
   {
-    "aspect": "易用性",
-    "percentage": 35,
+    "desc": "易用性",
+    "descCn": "易用性",
+    "percentage": 0.35,
     "reason": "许多用户都欣赏切片机的易用性和清洁性，使苹果切片成为一项轻松的任务。"
   },
   {
-    "aspect": "坚固耐用",
-    "percentage": 28,
+    "desc": "坚固耐用",
+    "descCn": "坚固耐用",
+    "percentage": 0.28,
     "reason": "许多评论者喜欢切片机的耐用材质和坚固结构。"
   },
   {
-    "aspect": "锋利刀片",
-    "percentage": 22,
+    "desc": "锋利刀片",
+    "descCn": "锋利刀片",
+    "percentage": 0.22,
     "reason": "用户赞扬刀片锋利，切片整齐。"
   },
   {
-    "aspect": "性价比高",
-    "percentage": 10,
+    "desc": "性价比高",
+    "descCn": "性价比高",
+    "percentage": 0.10,
     "reason": "用户认为产品物有所值。"
   },
   {
-    "aspect": "易清洗",
-    "percentage": 5,
+    "desc": "易清洗",
+    "descCn": "易清洗",
+    "percentage": 0.05,
     "reason": "清洁方便，节省时间。"
   }
 ]
 
 关键要求：
-1. 【必须中文输出】所有字段必须使用中文，包括aspect和reason
-2. 【字段名】aspect必须是3-10字符的中文短标题（如"易用性"、"坚固耐用"、"锋利刀片"）
-3. 【百分比计算】percentage是该优点在所有优点中的实际占比
-   - 计算方式：(该优点提及次数 / 所有优点总提及次数) × 100
-   - ⚠️ 必须返回至少10-15个优点（对标Shulex）
+1. 【必须中文输出】所有字段必须使用中文，包括desc和reason
+2. 【字段名】desc必须是3-10字符的中文短标题（如"易用性"、"坚固耐用"、"锋利刀片"）
+3. 【百分比计算】percentage是该优点在所有优点中的实际占比（⚠️ 小数格式0-1，不是0-100）
+   - 计算方式：(该优点提及次数 / 所有优点总提及次数)
+   - ⚠️ 必须返回至少8-10个优点
    - 请深度分析评论，识别所有被提及的优点，无论提及频率高低
    - 包括主要优点、次要优点和潜在优点
-   - 所有百分比加起来应该接近100%
-4. reason是简短的中文AI总结（1-2句话）
+   - ⚠️ 所有百分比加起来应该接近1.0（不是100）
+4. 【原因限制】reason是简短的中文AI总结
+   - ⚠️ **reason字段必须控制在150字以内**
+   - 要求：简洁清晰、言简意赅、1-2句话概括核心
+   - 避免冗长啰嗦的描述
 5. 不要返回其他字段（examples、keywords、mentionCount等）
 
-⚠️ **数据量要求：必须返回10-15条优点数据，不允许少于10条！**`
+⚠️ **数据量要求：必须返回8-10条优点数据，不允许少于8条！**`
   }
 
   /**
@@ -525,43 +860,54 @@ ${reviewText}
 返回JSON格式（直接返回数组，不需要weaknesses包装）：
 [
   {
-    "aspect": "难以使用",
-    "percentage": 40,
+    "desc": "难以使用",
+    "descCn": "难以使用",
+    "percentage": 0.40,
     "reason": "大量用户对切片机无法完全切开苹果表示沮丧，需要额外的努力。"
   },
   {
-    "aspect": "刀片不够锋利",
-    "percentage": 30,
+    "desc": "刀片不够锋利",
+    "descCn": "刀片不够锋利",
+    "percentage": 0.30,
     "reason": "许多评论表示刀片不够锋利，导致苹果切片困难。"
   },
   {
-    "aspect": "质量差",
-    "percentage": 15,
+    "desc": "质量差",
+    "descCn": "质量差",
+    "percentage": 0.15,
     "reason": "部分用户反映产品材质不够结实，容易损坏。"
   },
   {
-    "aspect": "尺寸问题",
-    "percentage": 10,
+    "desc": "尺寸问题",
+    "descCn": "尺寸问题",
+    "percentage": 0.10,
     "reason": "一些用户抱怨产品尺寸不合适。"
   },
   {
-    "aspect": "清洁困难",
-    "percentage": 5,
+    "desc": "清洁困难",
+    "descCn": "清洁困难",
+    "percentage": 0.05,
     "reason": "部分用户反映清洁不方便。"
   }
 ]
 
 关键要求：
-1. 【必须中文输出】所有字段必须使用中文，包括aspect和reason
-2. 【字段名】aspect必须是3-10字符的中文短标题（如"难以使用"、"刀片不够锋利"、"切割不均匀"）
-3. 【百分比计算】percentage是该缺点在所有缺点中的实际占比
-   - 计算方式：(该缺点提及次数 / 所有缺点总提及次数) × 100
-   - 注意：只返回前5个最重要的缺点，但百分比是相对于所有发现的缺点计算的
-   - 因此前5个的百分比加起来通常在60-80%，剩余的20-40%在其他未返回的缺点中
-   - 示例：如果发现8个缺点，前5个提及次数是 40, 30, 20, 15, 10（总130次中的115次）
-     那么百分比是：31%, 23%, 15%, 12%, 8%（总计89%，剩余11%在其他3个缺点中）
-4. reason是简短的中文AI总结（1-2句话）
-5. 不要返回其他字段（examples、keywords、mentionCount等）`
+1. 【必须中文输出】所有字段必须使用中文，包括desc和reason
+2. 【字段名】desc必须是3-10字符的中文短标题（如"难以使用"、"刀片不够锋利"、"切割不均匀"）
+3. 【百分比计算】percentage是该缺点在所有缺点中的实际占比（⚠️ 小数格式0-1，不是0-100）
+   - 计算方式：(该缺点提及次数 / 所有缺点总提及次数)
+   - ⚠️ 必须返回至少8-10个缺点
+   - 请深度分析评论，识别所有被提及的缺点，无论提及频率高低
+   - 包括主要缺点、次要缺点和潜在缺点
+   - 百分比是相对于所有发现的缺点计算的
+   - ⚠️ 所有百分比加起来应该接近1.0（不是100）
+4. 【原因限制】reason是简短的中文AI总结
+   - ⚠️ **reason字段必须控制在150字以内**
+   - 要求：简洁清晰、言简意赅、1-2句话概括核心
+   - 避免冗长啰嗦的描述
+5. 不要返回其他字段（examples、keywords、mentionCount等）
+
+⚠️ **数据量要求：必须返回8-10条缺点数据，不允许少于8条！**`
   }
 
   /**
@@ -580,49 +926,48 @@ ${reviewText}
 返回JSON格式（直接返回数组，不需要motivations包装）：
 [
   {
-    "type": "功能需求",
-    "percentage": 40,
-    "description": "需要快速切苹果的工具，提高烹饪效率",
-    "reason": "大部分用户购买是为了满足特定功能需求"
+    "desc": "功能需求",
+    "descCn": "功能需求",
+    "percentage": 0.40,
+    "reason": "需要快速切苹果的工具，提高烹饪效率。大部分用户购买是为了满足特定功能需求。"
   },
   {
-    "type": "为孩子购买",
-    "percentage": 25,
-    "description": "为孩子准备健康零食，让孩子爱上吃水果",
-    "reason": "家长群体是主要购买者"
+    "desc": "为孩子购买",
+    "descCn": "为孩子购买",
+    "percentage": 0.25,
+    "reason": "为孩子准备健康零食，让孩子爱上吃水果。家长群体是主要购买者。"
   },
   {
-    "type": "性价比高",
-    "percentage": 20,
-    "description": "价格合理，性能满足需求",
-    "reason": "用户认为产品物有所值"
+    "desc": "性价比高",
+    "descCn": "性价比高",
+    "percentage": 0.20,
+    "reason": "价格合理，性能满足需求。用户认为产品物有所值。"
   },
   {
-    "type": "送礼",
-    "percentage": 10,
-    "description": "作为礼物送给亲友",
-    "reason": "部分用户购买用于赠送"
+    "desc": "送礼",
+    "descCn": "送礼",
+    "percentage": 0.10,
+    "reason": "作为礼物送给亲友，部分用户购买用于赠送。"
   },
   {
-    "type": "替换旧品",
-    "percentage": 5,
-    "description": "替换老旧或损坏的切片器",
-    "reason": "少数用户是重复购买或升级"
+    "desc": "替换旧品",
+    "descCn": "替换旧品",
+    "percentage": 0.05,
+    "reason": "替换老旧或损坏的切片器，少数用户是重复购买或升级。"
   }
 ]
 
 关键要求：
 1. 【必须中文输出】所有字段必须使用中文
-2. 【字段名】type必须是3-10字符的中文短标题（如"性价比高"、"功能需求"、"送礼"、"优质材料"）
-3. 【百分比计算】percentage是该动机在所有动机中的实际占比
-   - 计算方式：(该动机提及次数 / 所有动机总提及次数) × 100
+2. 【字段名】desc必须是3-10字符的中文短标题（如"性价比高"、"功能需求"、"送礼"、"优质材料"）
+3. 【百分比计算】percentage是该动机在所有动机中的实际占比（小数格式0-1）
+   - 计算方式：(该动机提及次数 / 所有动机总提及次数)
    - ⚠️ 必须返回至少10-15个购买动机（对标Shulex）
    - 请深度分析评论，识别所有可能的购买动机
    - 包括主要动机、次要动机和潜在动机
-   - 所有百分比加起来应该接近100%
-4. description是动机的详细中文描述
-5. reason是你的中文分析原因
-6. 不要返回keywords字段`
+   - 所有百分比加起来应该接近1.0
+4. reason是你的中文分析原因（包含详细描述）
+5. 不要返回keywords、description等其他字段`
   }
 
   /**
@@ -642,60 +987,48 @@ ${reviewText}
 返回JSON格式（直接返回数组，不需要unmetNeeds包装）：
 [
   {
-    "need": "更锋利刀片",
-    "percentage": 35,
-    "severity": "高",
-    "examples": ["希望刀片更锋利", "需要更好的切割效果"],
-    "suggestions": ["增强刀片锋利度", "优化切割机制"],
-    "reason": "用户表示希望刀片机无需额外努力即可完全切开苹果，说明当前产品在核心功能上还有改进空间"
+    "desc": "更锋利刀片",
+    "descCn": "更锋利刀片",
+    "percentage": 0.35,
+    "reason": "用户表示希望刀片机无需额外努力即可完全切开苹果，说明当前产品在核心功能上还有改进空间。建议：增强刀片锋利度、优化切割机制。"
   },
   {
-    "need": "持久耐用",
-    "percentage": 28,
-    "severity": "高",
-    "examples": ["容易损坏", "使用几次就坏了"],
-    "suggestions": ["提升材料质量", "加固结构设计"],
-    "reason": "耐用性是用户关注的重要因素"
+    "desc": "持久耐用",
+    "descCn": "持久耐用",
+    "percentage": 0.28,
+    "reason": "耐用性是用户关注的重要因素。许多用户反映产品容易损坏、使用几次就坏了。建议：提升材料质量、加固结构设计。"
   },
   {
-    "need": "易于清洁",
-    "percentage": 20,
-    "severity": "中",
-    "examples": ["难以清洗", "缝隙太多"],
-    "suggestions": ["简化结构", "可拆卸设计"],
-    "reason": "清洁便利性影响用户体验"
+    "desc": "易于清洁",
+    "descCn": "易于清洁",
+    "percentage": 0.20,
+    "reason": "清洁便利性影响用户体验。用户反映难以清洗、缝隙太多。建议：简化结构、可拆卸设计。"
   },
   {
-    "need": "尺寸适配",
-    "percentage": 12,
-    "severity": "中",
-    "examples": ["太大了", "不适合小苹果"],
-    "suggestions": ["推出多尺寸版本"],
-    "reason": "不同水果尺寸需求不同"
+    "desc": "尺寸适配",
+    "descCn": "尺寸适配",
+    "percentage": 0.12,
+    "reason": "不同水果尺寸需求不同。用户提到太大了、不适合小苹果。建议：推出多尺寸版本。"
   },
   {
-    "need": "防滑设计",
-    "percentage": 5,
-    "severity": "低",
-    "examples": ["容易滑动", "需要防滑垫"],
-    "suggestions": ["底部增加防滑垫"],
-    "reason": "提升使用安全性"
+    "desc": "防滑设计",
+    "descCn": "防滑设计",
+    "percentage": 0.05,
+    "reason": "提升使用安全性。用户反映容易滑动、需要防滑垫。建议：底部增加防滑垫。"
   }
 ]
 
 关键要求：
 1. 【必须中文输出】所有字段必须使用中文
-2. 【字段名】need必须是3-10字符的中文短标题（如"持久耐用"、"更锋利刀片"、"易于清洁"）
-3. 【百分比计算】percentage是该需求在所有未满足需求中的实际占比
-   - 计算方式：(该需求提及次数 / 所有未满足需求总提及次数) × 100
+2. 【字段名】desc必须是3-10字符的中文短标题（如"持久耐用"、"更锋利刀片"、"易于清洁"）
+3. 【百分比计算】percentage是该需求在所有未满足需求中的实际占比（小数格式0-1）
+   - 计算方式：(该需求提及次数 / 所有未满足需求总提及次数)
    - ⚠️ 必须返回至少10-15个未满足需求（对标Shulex）
    - 请深度分析所有差评和中评，识别所有用户不满意的地方
    - 包括主要需求、次要需求和潜在需求
-   - 所有百分比加起来应该接近100%
-4. severity是严重程度：高/中/低
-5. examples是用户的原话引用（中文数组）
-6. suggestions是改进建议（中文数组）
-7. reason是你的中文分析原因
+   - 所有百分比加起来应该接近1.0
+4. reason是你的中文分析原因（包含用户反馈、改进建议等详细信息）
+5. 不要返回severity、examples、suggestions等其他字段
 
 ⚠️ **数据量要求：必须返回10-15条未满足需求数据，不允许少于10条！**`
   }

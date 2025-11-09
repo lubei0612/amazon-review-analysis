@@ -99,7 +99,8 @@ import html2canvas from 'html2canvas'
 const props = defineProps({
   data: {
     type: Array,
-    required: true
+    required: false,  // ✅ 改为非必需
+    default: () => []
   },
   productName: {
     type: String,
@@ -252,6 +253,8 @@ async function exportToPNG() {
     color: #4B5563;
     font-size: 13px;
     line-height: 1.6;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
 
   @media (max-width: 1200px) {

@@ -54,14 +54,14 @@
 
     <div class="experience-rows">
       <div 
-        v-for="item in negativeDisplay" 
+        v-for="(item, index) in negativeDisplay" 
         :key="item.desc"
         class="data-row experience-row"
       >
         <div class="col-desc">{{ isTranslated ? item.descCn : item.desc }}</div>
         <div class="col-percentage">
           <span class="percentage-text">
-            {{ (item.percentage * 100).toFixed(1) }}%({{ item.count }})
+            {{ (item.percentage * 100).toFixed(1) }}%
           </span>
           <div class="progress-bar-bg">
             <div 
@@ -71,7 +71,21 @@
           </div>
         </div>
         <div class="col-reason">
-          {{ isTranslated ? item.reasonCn : item.reason }}
+          <el-tooltip 
+            :content="isTranslated ? item.reasonCn : item.reason" 
+            placement="top"
+            :disabled="!reasonNeedsExpand(item.reason)"
+          >
+            <div 
+              :class="['reason-text', { 'expanded': expandedNegativeReasons[index] }]"
+              @click="toggleNegativeReasonExpand(index)"
+            >
+              {{ isTranslated ? item.reasonCn : item.reason }}
+              <span v-if="reasonNeedsExpand(item.reason) && !expandedNegativeReasons[index]" class="expand-btn">
+                展开
+              </span>
+            </div>
+          </el-tooltip>
         </div>
       </div>
     </div>
@@ -111,14 +125,14 @@
 
     <div class="experience-rows">
       <div 
-        v-for="item in positiveDisplay" 
+        v-for="(item, index) in positiveDisplay" 
         :key="item.desc"
         class="data-row experience-row"
       >
         <div class="col-desc">{{ isTranslated ? item.descCn : item.desc }}</div>
         <div class="col-percentage">
           <span class="percentage-text">
-            {{ (item.percentage * 100).toFixed(1) }}%({{ item.count }})
+            {{ (item.percentage * 100).toFixed(1) }}%
           </span>
           <div class="progress-bar-bg">
             <div 
@@ -128,7 +142,21 @@
           </div>
         </div>
         <div class="col-reason">
-          {{ isTranslated ? item.reasonCn : item.reason }}
+          <el-tooltip 
+            :content="isTranslated ? item.reasonCn : item.reason" 
+            placement="top"
+            :disabled="!reasonNeedsExpand(item.reason)"
+          >
+            <div 
+              :class="['reason-text', { 'expanded': expandedPositiveReasons[index] }]"
+              @click="togglePositiveReasonExpand(index)"
+            >
+              {{ isTranslated ? item.reasonCn : item.reason }}
+              <span v-if="reasonNeedsExpand(item.reason) && !expandedPositiveReasons[index]" class="expand-btn">
+                展开
+              </span>
+            </div>
+          </el-tooltip>
         </div>
       </div>
     </div>
@@ -153,11 +181,13 @@ import html2canvas from 'html2canvas'
 const props = defineProps({
   negativeData: {
     type: Array,
-    required: true
+    required: false,  // ✅ 改为非必需
+    default: () => []
   },
   positiveData: {
     type: Array,
-    required: true
+    required: false,  // ✅ 改为非必需
+    default: () => []
   },
   productName: {
     type: String,
@@ -170,6 +200,10 @@ const INITIAL_DISPLAY_COUNT = 10
 const LOAD_MORE_COUNT = 10  // 每次加载10条
 const currentNegativeDisplayCount = ref(INITIAL_DISPLAY_COUNT)
 const currentPositiveDisplayCount = ref(INITIAL_DISPLAY_COUNT)
+
+// ✅ 原因展开状态
+const expandedNegativeReasons = ref({})
+const expandedPositiveReasons = ref({})
 
 const negativeDisplay = computed(() => {
   return props.negativeData.slice(0, currentNegativeDisplayCount.value)
@@ -197,6 +231,20 @@ const showPositiveCollapse = computed(() => {
 
 function handleTranslate() {
   isTranslated.value = !isTranslated.value
+}
+
+// ✅ 判断原因是否需要展开（超过150字）
+function reasonNeedsExpand(reason) {
+  return reason && reason.length > 150
+}
+
+// ✅ 切换原因展开状态
+function toggleNegativeReasonExpand(index) {
+  expandedNegativeReasons.value[index] = !expandedNegativeReasons.value[index]
+}
+
+function togglePositiveReasonExpand(index) {
+  expandedPositiveReasons.value[index] = !expandedPositiveReasons.value[index]
 }
 
 function loadMoreNegative() {
@@ -290,6 +338,47 @@ async function exportToPNG() {
 
 <style lang="scss" scoped>
 .product-experience-module {
+  .col-reason {
+    color: #4B5563;
+    font-size: 13px;
+    line-height: 1.6;
+    
+    .reason-text {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: break-word;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s;
+      
+      &.expanded {
+        display: block;
+        -webkit-line-clamp: unset;
+        max-height: none;
+      }
+      
+      &:hover {
+        color: #1F2937;
+      }
+      
+      .expand-btn {
+        display: inline-block;
+        margin-left: 8px;
+        color: #3b82f6;
+        font-weight: 600;
+        font-size: 12px;
+        cursor: pointer;
+        
+        &:hover {
+          color: #2563eb;
+          text-decoration: underline;
+        }
+      }
+    }
+  }
   // ✅ 响应式布局
   @media (max-width: 1200px) {
     .table-header,

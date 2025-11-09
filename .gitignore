@@ -1,27 +1,11 @@
-# Dependencies
+# Node modules
 node_modules/
 web/node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# Environment Variables
+# Environment variables
 .env
 .env.local
 .env.*.local
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-
-# Build output
-dist/
-build/
-web/dist/
 
 # Logs
 logs/
@@ -31,24 +15,58 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-# Testing
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Test coverage
 coverage/
 *.lcov
 .nyc_output
 
-# Temp files
-*.tmp
-*.temp
-temp/
-tmp/
+# Build outputs
+dist/
+build/
+web/dist/
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
-desktop.ini
+*.sw?
 
-# Test results
-test-result*.json
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# Archive
-_archive/
+# Temporary files
+*.tmp
+*.temp
+test_*.json
+pm_data.json
+current_task_id.txt
+latest_task.txt
+test_task.txt
+analysis_result.json
+
+# Archives (keep the directory structure but ignore generated files)
+_archive/debug-files/*.png
+_archive/debug-files/*.html
+_archive/debug-files/*.js
+
+# Chrome extension (if generated)
+chrome-extension/dist/
+
+# Database (if using local DB files)
+*.sqlite
+*.db
+
+# Docker volumes
+docker-volumes/

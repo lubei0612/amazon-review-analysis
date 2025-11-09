@@ -130,15 +130,15 @@ body {
   transition: width 0.3s ease;
 
   &.blue {
-    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    background: linear-gradient(90deg, #667eea, #764ba2);  // ✅ Shulex蓝紫渐变
   }
 
   &.green {
-    background: linear-gradient(90deg, #10b981, #34d399);
+    background: #10B981;  // ✅ Shulex绿色（好评）- 使用纯色更清晰
   }
 
   &.red {
-    background: linear-gradient(90deg, #ef4444, #f87171);
+    background: #EF4444;  // ✅ Shulex红色（差评）- 使用纯色更清晰
   }
 }
 

@@ -1,36 +1,47 @@
 <template>
   <div class="module-container star-rating-impact-module">
-    <!-- 标题栏 -->
-    <div class="module-header">
-      <div class="header-left">
-        <span class="module-icon">⭐</span>
-        <h3 class="module-title">星级影响度</h3>
-      </div>
-      <div class="header-right">
-        <el-button size="small" @click="handleTranslate">
-          {{ isTranslated ? '还原' : '翻译' }}
-        </el-button>
-        <el-dropdown @command="handleDownload">
-          <el-button size="small">
-            下载 <el-icon><ArrowDown /></el-icon>
+    <!-- ✅ 空状态提示 -->
+    <div v-if="!props.data || props.data.length === 0" class="empty-state">
+      <el-empty description="暂无星级影响度数据">
+        <template #image>
+          <span style="font-size: 48px">⭐</span>
+        </template>
+      </el-empty>
+    </div>
+
+    <!-- 正常内容 -->
+    <template v-else>
+      <!-- 标题栏 -->
+      <div class="module-header">
+        <div class="header-left">
+          <span class="module-icon">⭐</span>
+          <h3 class="module-title">星级影响度</h3>
+        </div>
+        <div class="header-right">
+          <el-button size="small" @click="handleTranslate">
+            {{ isTranslated ? '还原' : '翻译' }}
           </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="csv">📊 下载模块数据</el-dropdown-item>
-              <el-dropdown-item command="png">🖼️ 下载图片</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+          <el-dropdown @command="handleDownload">
+            <el-button size="small">
+              下载 <el-icon><ArrowDown /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="csv">📊 下载模块数据</el-dropdown-item>
+                <el-dropdown-item command="png">🖼️ 下载图片</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
       </div>
-    </div>
 
-    <!-- 说明文字 -->
-    <div class="module-description">
-      分析该商品星级的影响原因，帮助你聚焦问题和机会
-    </div>
+      <!-- 说明文字 -->
+      <div class="module-description">
+        分析该商品星级的影响原因，帮助你聚焦问题和机会
+      </div>
 
-    <!-- 散点图 -->
-    <div class="module-body">
+      <!-- 散点图 -->
+      <div class="module-body">
       <div class="chart-container">
         <v-chart
           class="chart"
@@ -39,6 +50,7 @@
         />
       </div>
     </div>
+    </template>
   </div>
 </template>
 
@@ -68,8 +80,9 @@ use([
 
 const props = defineProps({
   data: {
-    type: Array,
-    required: true
+    type: [Array, Object],  // ✅ 支持Array或Object
+    required: false,
+    default: () => []
   },
   productName: {
     type: String,
@@ -79,25 +92,72 @@ const props = defineProps({
 
 const isTranslated = ref(false)
 
-// 图表配置
-const chartOption = computed(() => {
-  // 分为好评话题和差评话题
-  const positiveTopics = []
-  const negativeTopics = []
+// ✅ 获取keyFactors数据（新的数据结构）
+const keyFactorsData = computed(() => {
+  if (!props.data) return []
   
-  props.data.forEach(item => {
+  // 新数据结构：{ratingDistribution, keyFactors}
+  if (props.data.keyFactors && Array.isArray(props.data.keyFactors)) {
+    return props.data.keyFactors
+  }
+  
+  // 降级：旧数据结构支持
+  if (Array.isArray(props.data)) {
+    return props.data
+  }
+  
+  return []
+})
+
+// 图表配置 - 散点图（X轴=星级，Y轴=情感倾向）
+const chartOption = computed(() => {
+  const factors = keyFactorsData.value
+  
+  if (factors.length === 0) {
+    return {}
+  }
+  
+  // ✅ Shulex风格：Y轴使用百分比，数据点按实际占比分散显示
+  const positiveData = []
+  const negativeData = []
+  
+  // 按星级分组，用于计算X轴偏移避免重叠
+  const ratingGroups = { 1: [], 2: [], 3: [], 4: [], 5: [] }
+  
+  factors.forEach(item => {
+    const rating = item.rating || 3
+    ratingGroups[rating].push(item)
+  })
+  
+  // 为每个数据点计算位置
+  factors.forEach(item => {
+    const factorName = isTranslated.value ? (item.factorEn || item.factor) : item.factor
+    const rating = item.rating || 3
+    const percentage = (item.percentage || 0) * 100 // 转为百分比（0-100）
+    const sentiment = item.sentiment === 'positive' ? 'positive' : 'negative'
+    
+    // ✅ 计算X轴偏移：同星级的数据点左右分散，避免重叠
+    const sameRatingItems = ratingGroups[rating]
+    const itemIndex = sameRatingItems.indexOf(item)
+    const xOffset = sameRatingItems.length > 1 
+      ? ((itemIndex - (sameRatingItems.length - 1) / 2) * 0.12) 
+      : 0
+    
     const point = {
-      value: [item.avgRating, item.percentage * 100],
-      name: isTranslated.value ? item.topicCn : item.topic,
-      itemStyle: {
-        color: item.avgRating >= 4 ? '#10B981' : '#EF4444'
-      }
+      value: [
+        Number(rating) + xOffset,  // X轴：星级 + 偏移
+        percentage  // Y轴：提及占比（0-100%）
+      ],
+      name: factorName,
+      percentage: percentage,
+      reason: item.reason || '',
+      sentiment: sentiment
     }
     
-    if (item.avgRating >= 4) {
-      positiveTopics.push(point)
+    if (sentiment === 'positive') {
+      positiveData.push(point)
     } else {
-      negativeTopics.push(point)
+      negativeData.push(point)
     }
   })
   
@@ -105,21 +165,23 @@ const chartOption = computed(() => {
     tooltip: {
       trigger: 'item',
       formatter: (params) => {
-        const data = props.data.find(item => 
-          (isTranslated.value ? item.topicCn : item.topic) === params.name
-        )
+        const rating = Math.round(params.value[0])
+        const sentiment = params.data.sentiment === 'positive' ? '正向' : '负向'
         return `
-          <div style="padding: 8px;">
+          <div style="padding: 8px; max-width: 300px;">
             <div style="font-weight: 600; margin-bottom: 6px;">${params.name}</div>
-            <div>平均星级: ${data.avgRating.toFixed(1)} ⭐</div>
-            <div>提及占比: ${(data.percentage * 100).toFixed(1)}%</div>
-            <div>提及次数: ${data.count}</div>
+            <div>星级: ${rating}⭐</div>
+            <div>情感: ${sentiment}</div>
+            <div>提及占比: ${params.data.percentage.toFixed(1)}%</div>
+            <div style="margin-top: 6px; color: #6B7280; font-size: 12px; line-height: 1.4;">
+              ${params.data.reason}
+            </div>
           </div>
         `
       }
     },
     legend: {
-      data: ['好评话题 (≥4星)', '差评话题 (<4星)'],
+      data: ['正向关注点', '负向关注点'],
       bottom: 10,
       itemWidth: 16,
       itemHeight: 12,
@@ -140,15 +202,17 @@ const chartOption = computed(() => {
       nameLocation: 'middle',
       nameGap: 25,
       nameTextStyle: {
-        fontSize: 12,
-        color: '#6B7280'
+        fontSize: 13,
+        color: '#6B7280',
+        fontWeight: 600
       },
-      min: 0,
-      max: 5,
+      min: 0.5,
+      max: 5.5,
       interval: 1,
       axisLabel: {
         formatter: '{value}⭐',
-        fontSize: 11
+        fontSize: 11,
+        color: '#374151'
       },
       splitLine: {
         show: true,
@@ -160,16 +224,23 @@ const chartOption = computed(() => {
     },
     yAxis: {
       type: 'value',
-      name: '提及占比 (%)',
+      name: '提及占比',
       nameLocation: 'middle',
-      nameGap: 50,
+      nameGap: 45,
       nameTextStyle: {
-        fontSize: 12,
-        color: '#6B7280'
+        fontSize: 13,
+        color: '#6B7280',
+        fontWeight: 600
+      },
+      min: 0,
+      max: (value) => {
+        // ✅ 动态计算Y轴最大值，稍微大于最大百分比
+        return Math.ceil(value.max * 1.15)
       },
       axisLabel: {
         formatter: '{value}%',
-        fontSize: 11
+        fontSize: 11,
+        color: '#374151'
       },
       splitLine: {
         show: true,
@@ -181,47 +252,69 @@ const chartOption = computed(() => {
     },
     series: [
       {
-        name: '好评话题 (≥4星)',
+        name: '正向关注点',
         type: 'scatter',
-        symbolSize: 10,
-        data: positiveTopics,
+        symbolSize: 10,  // ✅ Shulex风格：较小的散点
+        data: positiveData,
+        itemStyle: {
+          color: '#10B981',
+          shadowBlur: 2,
+          shadowColor: 'rgba(16, 185, 129, 0.2)'
+        },
         label: {
-          show: true,
+          show: true,  // ✅ Shulex风格：标签默认显示
           position: 'right',
           formatter: '{b}',
           fontSize: 11,
-          color: '#10B981',
-          fontWeight: '500'
+          color: '#059669',
+          fontWeight: '500',
+          distance: 8,
+          backgroundColor: 'transparent'
         },
-        markLine: {
-          silent: true,
-          symbol: ['none', 'arrow'],
-          symbolSize: 8,
-          lineStyle: {
-            color: '#9CA3AF',
-            type: 'solid',
-            width: 2
+        emphasis: {
+          scale: 1.5,
+          itemStyle: {
+            color: '#059669',
+            shadowBlur: 8,
+            shadowColor: 'rgba(16, 185, 129, 0.5)'
           },
           label: {
-            show: false
-          },
-          data: [
-            { xAxis: 4 }
-          ]
+            fontWeight: '600',
+            fontSize: 12
+          }
         }
       },
       {
-        name: '差评话题 (<4星)',
+        name: '负向关注点',
         type: 'scatter',
-        symbolSize: 10,
-        data: negativeTopics,
+        symbolSize: 10,  // ✅ Shulex风格：较小的散点
+        data: negativeData,
+        itemStyle: {
+          color: '#EF4444',
+          shadowBlur: 2,
+          shadowColor: 'rgba(239, 68, 68, 0.2)'
+        },
         label: {
-          show: true,
+          show: true,  // ✅ Shulex风格：标签默认显示
           position: 'right',
           formatter: '{b}',
           fontSize: 11,
-          color: '#EF4444',
-          fontWeight: '500'
+          color: '#DC2626',
+          fontWeight: '500',
+          distance: 8,
+          backgroundColor: 'transparent'
+        },
+        emphasis: {
+          scale: 1.5,
+          itemStyle: {
+            color: '#DC2626',
+            shadowBlur: 8,
+            shadowColor: 'rgba(239, 68, 68, 0.5)'
+          },
+          label: {
+            fontWeight: '600',
+            fontSize: 12
+          }
         }
       }
     ]
@@ -241,15 +334,17 @@ function handleDownload(command) {
 }
 
 function exportToCSV() {
-  const headers = ['话题', '平均星级', '提及占比', '提及次数']
+  const headers = ['关注点', '星级', '情感', '提及占比', '原因']
+  const factors = keyFactorsData.value
   
   const rows = [
     headers,
-    ...props.data.map(item => [
-      isTranslated.value ? item.topicCn : item.topic,
-      item.avgRating.toFixed(1),
-      (item.percentage * 100).toFixed(1) + '%',
-      item.count
+    ...factors.map(item => [
+      isTranslated.value ? (item.factorEn || item.factor) : item.factor,
+      item.rating + '⭐',
+      item.sentiment === 'positive' ? '正向' : '负向',
+      item.percentage.toFixed(1) + '%',
+      item.reason || ''
     ])
   ]
   
@@ -300,12 +395,12 @@ async function exportToPNG() {
 
   .chart {
     width: 100%;
-    height: 500px;
+    height: 550px;  /* ✅ Shulex风格：适中高度，更注重宽度展示 */
   }
 
   @media (max-width: 768px) {
     .chart {
-      height: 400px;
+      height: 450px;
     }
   }
 }

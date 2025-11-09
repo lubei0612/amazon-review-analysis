@@ -99,7 +99,8 @@ import html2canvas from 'html2canvas'
 const props = defineProps({
   data: {
     type: Array,
-    required: true
+    required: false,  // ✅ 改为非必需
+    default: () => []
   },
   productName: {
     type: String,

@@ -55,18 +55,17 @@
     <!-- 数据行 -->
     <div class="scenario-rows">
       <div 
-        v-for="item in displayData" 
+        v-for="(item, index) in displayData" 
         :key="item.desc"
         class="data-row scenario-row"
-        @click="openReviewDialog(item)"
       >
-        <div class="col-desc clickable">
+        <div class="col-desc clickable" @click="openReviewDialog(item)">
           {{ isTranslated ? item.descCn : item.desc }}
           <el-icon class="view-icon"><View /></el-icon>
         </div>
         <div class="col-percentage">
           <span class="percentage-text">
-            {{ formatPercentage(item.percentage) }}% ({{ item.count }})
+            {{ formatPercentage(item.percentage) }}%
           </span>
           <div class="progress-bar-bg">
             <div 
@@ -76,7 +75,22 @@
           </div>
         </div>
         <div class="col-reason">
-          {{ isTranslated ? item.reasonCn : item.reason }}
+          <!-- 使用tooltip显示完整内容 -->
+          <el-tooltip 
+            :content="isTranslated ? item.reasonCn : item.reason" 
+            placement="top"
+            :disabled="!reasonNeedsExpand(item.reason)"
+          >
+            <div 
+              :class="['reason-text', { 'expanded': expandedReasons[index] }]"
+              @click="toggleReasonExpand(index)"
+            >
+              {{ isTranslated ? item.reasonCn : item.reason }}
+              <span v-if="reasonNeedsExpand(item.reason) && !expandedReasons[index]" class="expand-btn">
+                展开
+              </span>
+            </div>
+          </el-tooltip>
         </div>
       </div>
     </div>
@@ -135,6 +149,9 @@ const dialogTitle = computed(() => {
   return selectedKeyword.value ? `"${selectedKeyword.value}" 相关评论` : '原始评论'
 })
 
+// ✅ 原因展开状态
+const expandedReasons = ref({})
+
 const displayData = computed(() => {
   return props.data.slice(0, currentDisplayCount.value)
 })
@@ -177,6 +194,16 @@ function formatPercentage(value) {
 function openReviewDialog(item) {
   selectedKeyword.value = isTranslated.value ? (item.descCn || item.desc) : item.desc
   reviewDialogVisible.value = true
+}
+
+// ✅ 判断原因是否需要展开（超过200字）
+function reasonNeedsExpand(reason) {
+  return reason && reason.length > 200
+}
+
+// ✅ 切换原因展开状态
+function toggleReasonExpand(index) {
+  expandedReasons.value[index] = !expandedReasons.value[index]
 }
 
 function handleDownload(command) {
@@ -301,6 +328,42 @@ async function exportToPNG() {
     color: #4B5563;
     font-size: 13px;
     line-height: 1.6;
+    
+    .reason-text {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: break-word;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s;
+      
+      &.expanded {
+        display: block;
+        -webkit-line-clamp: unset;
+        max-height: none;
+      }
+      
+      &:hover {
+        color: #1F2937;
+      }
+      
+      .expand-btn {
+        display: inline-block;
+        margin-left: 8px;
+        color: #3b82f6;
+        font-weight: 600;
+        font-size: 12px;
+        cursor: pointer;
+        
+        &:hover {
+          color: #2563eb;
+          text-decoration: underline;
+        }
+      }
+    }
   }
 
   @media (max-width: 1200px) {

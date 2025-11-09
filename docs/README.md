@@ -32,9 +32,10 @@ Amazon评论分析系统是一款智能化的产品评论分析工具，通过AI
 ## ✨ Features | 功能特性
 
 ### 1. 🔍 智能爬取
-- **三级降级策略**: Outscraper(主) → RapidAPI(备1) → Puppeteer(备2)
-- **全量模式**: 支持爬取产品的所有可用评论
-- **智能速率**: 自动控制请求频率，避免被封禁
+- **Apify爬虫**: 稳定可靠的评论抓取服务
+- **大规模支持**: 支持爬取2000+条评论
+- **多排序策略**: recent + helpful + top 混合爬取
+- **自动去重**: 确保评论数据的唯一性
 
 ### 2. 🤖 AI分析引擎
 - **7维度并发分析**:
@@ -85,14 +86,13 @@ copy env.example .env
 # Gemini API Key (必填) - AI 分析引擎
 GEMINI_API_KEY=your_gemini_api_key_here
 
-# RapidAPI Key (必填) - 评论爬虫
-RAPIDAPI_KEY=your_rapidapi_key_here
-RAPIDAPI_HOST=real-time-amazon-data.p.rapidapi.com
+# Apify API Token (必填) - 评论爬虫
+APIFY_API_TOKEN=your_apify_token_here
 ```
 
 **获取API密钥：**
 - **Gemini API**: https://aistudio.google.com/app/apikey
-- **RapidAPI**: https://rapidapi.com/letscrape-6bRBa3QguO5/api/real-time-amazon-data
+- **Apify API**: https://apify.com/ (注册后获取API Token)
 
 ### 🎬 启动系统
 

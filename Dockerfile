@@ -1,31 +1,18 @@
 # ===================================
-# 后端服务 Dockerfile
+# 后端服务 Dockerfile - 生产环境优化
 # ===================================
+# 只使用Apify爬虫，无需Chromium/Puppeteer
 
 FROM node:18-alpine
 
 # 设置工作目录
 WORKDIR /app
 
-# 安装 Chromium（Puppeteer需要）
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    freetype-dev \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont
-
-# 告诉 Puppeteer 跳过下载 Chromium，使用系统安装的版本
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-
 # 复制 package.json 和 package-lock.json
 COPY package*.json ./
 
-# 安装依赖
-RUN npm ci --only=production
+# 安装依赖（仅生产依赖）
+RUN npm ci --only=production && npm cache clean --force
 
 # 复制项目文件（排除node_modules和其他不必要的文件）
 COPY . .

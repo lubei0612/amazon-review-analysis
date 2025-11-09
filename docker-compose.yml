@@ -20,9 +20,8 @@ services:
       - GEMINI_TEMPERATURE=${GEMINI_TEMPERATURE:-0.3}
       - GEMINI_MAX_TOKENS=${GEMINI_MAX_TOKENS:-8000}
       
-      # 爬虫服务
+      # 爬虫服务（仅使用Apify）
       - APIFY_API_TOKEN=${APIFY_API_TOKEN}
-      - ENABLE_PUPPETEER_FALLBACK=${ENABLE_PUPPETEER_FALLBACK:-false}
       
       # 服务器配置
       - PORT=3001

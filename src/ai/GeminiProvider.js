@@ -50,7 +50,7 @@ class GeminiProvider {
             }
           ],
           temperature: this.temperature,
-          max_tokens: this.maxTokens,
+          max_tokens: this.maxTokens * 2, // 🔧 动态翻倍，避免JSON截断
           response_format: { type: 'json_object' } // 强制JSON输出
         },
         {
@@ -74,13 +74,35 @@ class GeminiProvider {
       logger.info(`Gemini AI分析完成！耗时: ${duration}s, Tokens: ${usage.total_tokens || 'N/A'}`)
       
       // ✅ 新增：检查content是否存在
-      if (!content) {
-        logger.error('Gemini未返回content，choices结构:', JSON.stringify(response.data.choices))
+      if (!content || content.trim() === '') {
+        logger.error('❌ Gemini返回空内容！')
+        logger.error('完整响应:', JSON.stringify(response.data))
         throw new Error('Gemini AI未返回有效内容')
       }
       
+      // 🔍 记录原始响应的前1000字符用于调试
+      logger.info('🔍 原始AI响应（前1000字符）:', content.substring(0, 1000))
+      
       // 解析JSON
-      const result = this.parseJSON(content)
+      let result = this.parseJSON(content)
+      
+      // ✅ 检查解析结果是否为空
+      if (!result) {
+        logger.error('❌ JSON解析结果为null或undefined')
+        logger.error('原始content:', content)
+        throw new Error('JSON解析失败，结果为空')
+      }
+      
+      if (Array.isArray(result) && result.length === 0) {
+        logger.warn('⚠️ 解析结果是空数组！')
+        logger.warn('完整content:', content.substring(0, 2000))
+      }
+      
+      // ✅ 特殊处理：如果返回 {scenarios: [...]}，提取数组
+      if (result && result.scenarios && Array.isArray(result.scenarios)) {
+        logger.info('检测到scenarios包装，自动提取数组')
+        result = result.scenarios
+      }
       
       return {
         success: true,

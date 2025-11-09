@@ -168,7 +168,8 @@ class DataCleaner {
     
     const ratingSum = reviews.reduce((sum, r) => sum + r.rating, 0)
     const verifiedCount = reviews.filter(r => r.isVerified).length
-    const contentLengths = reviews.map(r => r.content.length)
+    // ✅ 修复BUG#8: 防止content为undefined导致的错误
+    const contentLengths = reviews.map(r => (r.content || '').length)
     const avgContentLength = contentLengths.reduce((sum, len) => sum + len, 0) / total
     
     const ratingDistribution = {
