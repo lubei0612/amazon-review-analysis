@@ -1,6 +1,10 @@
 #!/bin/bash
 # ================================
 # Amazon评论分析系统 - 一键部署脚本
+# 使用方法:
+#   bash deploy.sh APIFY_TOKEN GEMINI_KEY
+#   或
+#   APIFY_TOKEN=xxx GEMINI_KEY=xxx bash deploy.sh
 # ================================
 
 set -e
@@ -16,6 +20,10 @@ NC='\033[0m'
 # 配置
 PROJECT_DIR="/opt/amazon-review-analysis"
 GITHUB_REPO="lubei0612/amazon-review-analysis"
+
+# 从命令行参数或环境变量获取API密钥
+APIFY_TOKEN="${1:-${APIFY_API_TOKEN}}"
+GEMINI_KEY="${2:-${GEMINI_API_KEY}}"
 
 echo ""
 echo -e "${CYAN}╔════════════════════════════════════════════╗${NC}"
@@ -48,38 +56,59 @@ fi
 
 echo ""
 
-# 2. 检查.env文件
-if [ ! -f .env ]; then
-    echo -e "${YELLOW}⚠️  .env文件不存在，从模板创建...${NC}"
-    if [ ! -f env.template ]; then
-        echo -e "${RED}❌ env.template文件不存在${NC}"
-        exit 1
-    fi
-    cp env.template .env
+# 2. 自动配置.env文件
+echo -e "${CYAN}📋 配置环境变量...${NC}"
+
+# 如果提供了API密钥，自动创建.env文件
+if [ -n "$APIFY_TOKEN" ] && [ -n "$GEMINI_KEY" ]; then
+    echo -e "${GREEN}✅ 检测到API密钥，自动创建.env文件...${NC}"
+    cat > .env << EOF
+# ================================
+# Amazon评论分析系统 - 环境变量
+# 自动生成于: $(date)
+# ================================
+
+# ===== Apify配置 =====
+APIFY_API_TOKEN=${APIFY_TOKEN}
+
+# ===== Gemini AI配置 =====
+GEMINI_API_KEY=${GEMINI_KEY}
+GEMINI_MODEL=gemini-2.0-flash-exp
+GEMINI_TEMPERATURE=0.7
+GEMINI_MAX_TOKENS=16000
+GEMINI_BASE_URL=https://aihubmix.com/v1
+
+# ===== 服务器配置 =====
+PORT=3001
+NODE_ENV=production
+LOG_LEVEL=info
+DEBUG=false
+EOF
+    chmod 600 .env
+    echo -e "${GREEN}✅ .env文件已自动创建并配置${NC}"
+elif [ -f .env ]; then
+    echo -e "${YELLOW}⚠️  使用现有.env文件${NC}"
+    source .env
+    APIFY_TOKEN="${APIFY_API_TOKEN}"
+    GEMINI_KEY="${GEMINI_API_KEY}"
+else
+    echo -e "${RED}❌ 未提供API密钥且.env文件不存在${NC}"
     echo ""
-    echo -e "${RED}❌ 请先编辑 .env 文件并填写API密钥:${NC}"
-    echo -e "${YELLOW}   nano $PROJECT_DIR/.env${NC}"
-    echo ""
-    echo -e "${CYAN}必需配置:${NC}"
-    echo -e "  - APIFY_API_TOKEN"
-    echo -e "  - GEMINI_API_KEY"
+    echo -e "${CYAN}使用方法:${NC}"
+    echo -e "  方法1: ${YELLOW}bash deploy.sh APIFY_TOKEN GEMINI_KEY${NC}"
+    echo -e "  方法2: ${YELLOW}APIFY_TOKEN=xxx GEMINI_KEY=xxx bash deploy.sh${NC}"
     echo ""
     exit 1
 fi
 
-# 3. 验证.env文件
-echo -e "${CYAN}📋 验证环境变量配置...${NC}"
-source .env
-
-if [ "$APIFY_API_TOKEN" = "your_apify_token_here" ] || [ -z "$APIFY_API_TOKEN" ]; then
-    echo -e "${RED}❌ APIFY_API_TOKEN 未配置${NC}"
-    echo -e "${YELLOW}请编辑 $PROJECT_DIR/.env 文件并填写真实的API密钥${NC}"
+# 3. 验证API密钥
+if [ "$APIFY_TOKEN" = "your_apify_token_here" ] || [ -z "$APIFY_TOKEN" ]; then
+    echo -e "${RED}❌ APIFY_API_TOKEN 未配置或无效${NC}"
     exit 1
 fi
 
-if [ "$GEMINI_API_KEY" = "your_gemini_api_key_here" ] || [ -z "$GEMINI_API_KEY" ]; then
-    echo -e "${RED}❌ GEMINI_API_KEY 未配置${NC}"
-    echo -e "${YELLOW}请编辑 $PROJECT_DIR/.env 文件并填写真实的API密钥${NC}"
+if [ "$GEMINI_KEY" = "your_gemini_api_key_here" ] || [ -z "$GEMINI_KEY" ]; then
+    echo -e "${RED}❌ GEMINI_API_KEY 未配置或无效${NC}"
     exit 1
 fi
 
