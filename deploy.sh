@@ -33,18 +33,32 @@ echo ""
 
 # 1. 克隆或更新项目
 if [ -d "$PROJECT_DIR" ]; then
-    echo -e "${CYAN}📦 更新项目代码...${NC}"
+    echo -e "${CYAN}📦 目录已存在，检查是否为Git仓库...${NC}"
     cd "$PROJECT_DIR"
     
-    # 备份.env文件
-    if [ -f .env ]; then
-        cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
-        echo -e "${GREEN}✅ 已备份现有.env文件${NC}"
+    # 检查是否为Git仓库
+    if [ -d .git ]; then
+        echo -e "${GREEN}✅ 检测到Git仓库，更新代码...${NC}"
+        # 备份.env文件
+        if [ -f .env ]; then
+            cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
+            echo -e "${GREEN}✅ 已备份现有.env文件${NC}"
+        fi
+        
+        git fetch origin
+        git reset --hard origin/main
+        echo -e "${GREEN}✅ 代码更新完成${NC}"
+    else
+        echo -e "${YELLOW}⚠️  目录存在但不是Git仓库，清理后重新克隆...${NC}"
+        cd /opt
+        rm -rf "$PROJECT_DIR"
+        echo -e "${CYAN}📦 克隆项目...${NC}"
+        sudo mkdir -p /opt
+        sudo chown $USER:$USER /opt
+        git clone "https://github.com/${GITHUB_REPO}.git" "$PROJECT_DIR"
+        cd "$PROJECT_DIR"
+        echo -e "${GREEN}✅ 项目克隆完成${NC}"
     fi
-    
-    git fetch origin
-    git reset --hard origin/main
-    echo -e "${GREEN}✅ 代码更新完成${NC}"
 else
     echo -e "${CYAN}📦 克隆项目...${NC}"
     sudo mkdir -p /opt
