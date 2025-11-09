@@ -415,7 +415,7 @@ async function handleCreateReport() {
     
     // ✅ 调用后端API创建任务
     const selectedCountry = countries.find(c => c.code === newReport.value.country) || currentCountry.value
-    const response = await fetch('http://localhost:3001/api/tasks/create', {
+    const response = await fetch('/api/tasks/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -510,7 +510,7 @@ async function pollTaskStatus(taskId, report) {
   
   const poll = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/tasks/${taskId}/status`)
+      const response = await fetch(`/api/tasks/${taskId}/status`)
       const data = await response.json()
       
       if (data.success) {
@@ -589,7 +589,7 @@ async function pollTaskStatus(taskId, report) {
 async function loadReports() {
   try {
     // ✅ 从后端API获取历史报告列表
-    const response = await fetch('http://localhost:3001/api/tasks')
+    const response = await fetch('/api/tasks')
     const data = await response.json()
     if (data.success && data.data && data.data.length > 0) {
       // 合并后端任务和Demo报告

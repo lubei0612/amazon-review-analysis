@@ -326,7 +326,7 @@ async function downloadReport() {
 async function handleAddCompetitor(asin) {
   try {
     // 创建分析任务
-    const response = await fetch('http://localhost:3001/api/analyze', {
+    const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ asin, maxReviews: 100 })
@@ -354,7 +354,7 @@ async function pollCompetitorTask(taskId, asin) {
   
   const timer = setInterval(async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/tasks/${taskId}/status`)
+      const response = await fetch(`/api/tasks/${taskId}/status`)
       const data = await response.json()
       
       if (!data.success) {
@@ -443,7 +443,7 @@ onMounted(async () => {
       let taskCompleted = false
       
       while (attempts < maxAttempts) {
-        const response = await fetch(`http://localhost:3001/api/tasks/${asin}/status`)
+        const response = await fetch(`/api/tasks/${asin}/status`)
         const data = await response.json()
         
         if (!data.success) {
