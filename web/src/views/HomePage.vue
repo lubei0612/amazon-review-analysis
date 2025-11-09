@@ -366,22 +366,82 @@ async function handleSearch() {
   isSearching.value = true
   
   try {
-    ElMessage.info('功能开发中：请使用Chrome插件在Amazon产品页面进行分析')
+    // ✅ 提取ASIN（支持URL或纯ASIN）
+    let asin = searchQuery.value.trim()
+    const asinMatch = asin.match(/\/dp\/([A-Z0-9]{10})/)
+    if (asinMatch) {
+      asin = asinMatch[1]
+    }
     
-    // TODO: 调用后端API开始分析
-    // const response = await fetch('/api/tasks/create', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({
-    //     keyword: searchQuery.value,
-    //     country: currentCountry.value.code
-    //   })
-    // })
+    // 验证ASIN格式
+    if (!/^[A-Z0-9]{10}$/.test(asin)) {
+      ElMessage.warning('请输入有效的ASIN（10位字母和数字）或Amazon产品链接')
+      isSearching.value = false
+      return
+    }
     
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    ElMessage.info(`正在创建分析任务: ${asin}`)
+    
+    // ✅ 调用后端API创建任务
+    const response = await fetch('/api/tasks/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        asin: asin,
+        productUrl: `https://www.${currentCountry.value.domain}/dp/${asin}`,
+        reviewCount: 500,
+        source: 'web-frontend',
+        analysisOptions: {
+          enableConsumerProfile: true,
+          enableUsageScenarios: true,
+          enableStarRating: true,
+          enableProductExperience: true,
+          enablePurchaseMotivation: true,
+          enableUnmetNeeds: true
+        }
+      })
+    })
+    
+    const result = await response.json()
+    
+    if (result.success) {
+      const taskId = result.data.taskId
+      
+      // ✅ 添加新报告到列表
+      reports.value.unshift({
+        id: Date.now(),
+        name: `分析中... (${asin})`,
+        asin: taskId,
+        totalAsin: 0,
+        createdAt: new Date().toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }).replace(/\//g, '/').replace(',', ''),
+        isDemo: false,
+        status: 'analyzing',
+        progress: 0,
+        realAsin: asin
+      })
+      
+      ElMessage.success('任务创建成功！正在后台分析，请稍候...')
+      searchQuery.value = '' // 清空搜索框
+      
+      // ✅ 开始轮询任务状态
+      pollTaskStatus(taskId, reports.value[0])
+      
+    } else {
+      throw new Error(result.message || '创建失败')
+    }
     
   } catch (error) {
-    ElMessage.error('搜索失败：' + error.message)
+    console.error('创建任务失败:', error)
+    ElMessage.error('创建失败：' + error.message)
   } finally {
     isSearching.value = false
   }
