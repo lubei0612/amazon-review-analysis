@@ -39,7 +39,7 @@
 
 ```env
 # Apify API Token（已配置）
-APIFY_API_TOKEN=apify_api_6ZxW29Kbncbd8hIeU8m3d9FPZi1iiK3Rq59j
+APIFY_API_TOKEN=your_apify_token_here
 
 # Gemini API（已配置）
 GEMINI_API_KEY=sk-Yu5uAj3YMcgImJFd57060cEbCc2a4c26Bb97AdE1779d0e11
@@ -221,7 +221,7 @@ Apify 返回的评论包含：
 cat .env | grep APIFY
 
 # 如果没有，添加
-echo "APIFY_API_TOKEN=apify_api_6ZxW29Kbncbd8hIeU8m3d9FPZi1iiK3Rq59j" >> .env
+echo "APIFY_API_TOKEN=your_apify_token_here" >> .env
 ```
 
 ### 问题 2: "404 Not Found"

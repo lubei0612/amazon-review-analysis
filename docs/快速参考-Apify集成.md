@@ -40,7 +40,7 @@
 
 ```env
 # .env 文件
-APIFY_API_TOKEN=apify_api_6ZxW29Kbncbd8hIeU8m3d9FPZi1iiK3Rq59j
+APIFY_API_TOKEN=your_apify_token_here
 GEMINI_API_KEY=sk-Yu5uAj3YMcgImJFd57060cEbCc2a4c26Bb97AdE1779d0e11
 GEMINI_BASE_URL=https://aihubmix.com/v1
 ENABLE_PUPPETEER_FALLBACK=false
