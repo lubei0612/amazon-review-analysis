@@ -155,7 +155,7 @@ docker rm amazon-review-backend amazon-review-frontend 2>/dev/null || true
 echo -e "${CYAN}🔍 检查端口占用...${NC}"
 # 查找所有运行中的容器，检查端口映射
 for container_id in $(docker ps -q 2>/dev/null); do
-    port_mapping=$(docker port $container_id 2>/dev/null | grep -E ":(3001|3002)->" || true)
+    port_mapping=$(docker port $container_id 2>/dev/null | grep -E ":(8088|8089)->" || true)
     if [ -n "$port_mapping" ]; then
         echo -e "${YELLOW}⚠️  发现占用端口的容器 $container_id，正在停止...${NC}"
         docker stop $container_id 2>/dev/null || true
@@ -165,14 +165,14 @@ done
 
 # 额外检查：使用 lsof 或 netstat 清理非 Docker 进程
 if command -v lsof &> /dev/null; then
-    if lsof -ti:3001 > /dev/null 2>&1; then
-        echo -e "${YELLOW}⚠️  端口 3001 被非 Docker 进程占用，正在清理...${NC}"
-        lsof -ti:3001 | xargs kill -9 2>/dev/null || true
+    if lsof -ti:8088 > /dev/null 2>&1; then
+        echo -e "${YELLOW}⚠️  端口 8088 被非 Docker 进程占用，正在清理...${NC}"
+        lsof -ti:8088 | xargs kill -9 2>/dev/null || true
         sleep 1
     fi
-    if lsof -ti:3002 > /dev/null 2>&1; then
-        echo -e "${YELLOW}⚠️  端口 3002 被非 Docker 进程占用，正在清理...${NC}"
-        lsof -ti:3002 | xargs kill -9 2>/dev/null || true
+    if lsof -ti:8089 > /dev/null 2>&1; then
+        echo -e "${YELLOW}⚠️  端口 8089 被非 Docker 进程占用，正在清理...${NC}"
+        lsof -ti:8089 | xargs kill -9 2>/dev/null || true
         sleep 1
     fi
 fi
@@ -198,9 +198,9 @@ echo ""
 
 # 检查后端健康
 echo -e "${CYAN}检查后端服务...${NC}"
-if curl -f http://localhost:3001/api/health &> /dev/null; then
+if curl -f http://localhost:8088/api/health &> /dev/null; then
     echo -e "${GREEN}✅ 后端服务运行正常${NC}"
-    curl -s http://localhost:3001/api/health | head -3
+    curl -s http://localhost:8088/api/health | head -3
 else
     echo -e "${RED}❌ 后端服务启动失败${NC}"
     echo -e "${YELLOW}查看日志: cd $PROJECT_DIR && $DOCKER_COMPOSE logs backend${NC}"
@@ -209,10 +209,10 @@ echo ""
 
 # 检查前端
 echo -e "${CYAN}检查前端服务...${NC}"
-if curl -f http://localhost:3002 &> /dev/null; then
+if curl -f http://localhost:8089 &> /dev/null; then
     echo -e "${GREEN}✅ 前端服务运行正常${NC}"
 else
-    echo -e "${YELLOW}⚠️  前端服务可能未启动（检查端口3002）${NC}"
+    echo -e "${YELLOW}⚠️  前端服务可能未启动（检查端口8089）${NC}"
 fi
 echo ""
 
@@ -223,8 +223,8 @@ echo -e "${GREEN}║        🎉 部署完成！                       ║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${CYAN}📌 服务访问地址:${NC}"
-echo -e "  后端API: ${GREEN}http://localhost:3001${NC}"
-echo -e "  前端界面: ${GREEN}http://localhost:3002${NC}"
+echo -e "  后端API: ${GREEN}http://localhost:8088${NC}"
+echo -e "  前端界面: ${GREEN}http://localhost:8089${NC}"
 echo ""
 echo -e "${CYAN}📌 项目目录:${NC}"
 echo -e "  ${GREEN}$PROJECT_DIR${NC}"

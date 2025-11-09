@@ -41,7 +41,7 @@ GEMINI_MAX_TOKENS=${GEMINI_MAX_TOKENS:-16000}
 GEMINI_BASE_URL=${GEMINI_BASE_URL:-https://aihubmix.com/v1}
 
 # ===== 服务器配置 =====
-PORT=${PORT:-3001}
+PORT=${PORT:-8088}
 NODE_ENV=${NODE_ENV:-production}
 LOG_LEVEL=${LOG_LEVEL:-info}
 DEBUG=${DEBUG:-false}
@@ -56,7 +56,7 @@ echo ""
 echo "📋 配置信息:"
 echo "  APIFY_API_TOKEN: ${APIFY_API_TOKEN:0:20}..."
 echo "  GEMINI_API_KEY: ${GEMINI_API_KEY:0:20}..."
-echo "  PORT: ${PORT:-3001}"
+echo "  PORT: ${PORT:-8088}"
 echo "  NODE_ENV: ${NODE_ENV:-production}"
 echo ""
 
