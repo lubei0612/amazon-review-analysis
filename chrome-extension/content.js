@@ -120,10 +120,9 @@ function initUI(container) {
   
   // 显示产品信息
   const titleEl = container.querySelector('#product-title')
-  const reviewCountEl = container.querySelector('#review-count')
   
   if (titleEl) titleEl.textContent = productInfo.title
-  if (reviewCountEl) reviewCountEl.textContent = `${productInfo.reviewCount} 条评论`
+  // ✅ 移除评论数显示（不在插件中显示）
   
   // 绑定按钮事件
   const analyzeBtn = container.querySelector('#analyze-btn')
@@ -374,28 +373,47 @@ function renderConsumerProfile(data, container) {
     hasBehaviors: !!data.behaviors
   })
   
-  const hasDimensions = data.dimensions || (data.demographics && data.usageTime && data.usageLocation && data.behaviors)
+  // ✅ 只要有任意维度数据就显示（不要求全部存在）
+  const hasDimensions = data.dimensions || data.demographics || data.usageTime || data.usageLocation || data.behaviors
   
   if (hasDimensions) {
     html += `<div class="dimensions-table">`
     
-    // 映射新旧字段名
+    // 映射新旧字段名，确保数组类型
     const dimensionMap = data.dimensions ? {
-      personas: { title: '人群特征', data: data.dimensions.personas || [] },
-      moments: { title: '使用时刻', data: data.dimensions.moments || [] },
-      locations: { title: '使用地点', data: data.dimensions.locations || [] },
-      behaviors: { title: '行为', data: data.dimensions.behaviors || [] }
+      personas: { title: '人群特征', data: Array.isArray(data.dimensions.personas) ? data.dimensions.personas : [] },
+      moments: { title: '使用时刻', data: Array.isArray(data.dimensions.moments) ? data.dimensions.moments : [] },
+      locations: { title: '使用地点', data: Array.isArray(data.dimensions.locations) ? data.dimensions.locations : [] },
+      behaviors: { title: '行为', data: Array.isArray(data.dimensions.behaviors) ? data.dimensions.behaviors : [] }
     } : {
-      personas: { title: '人群特征', data: data.demographics || [] },
-      moments: { title: '使用时刻', data: data.usageTime || [] },
-      locations: { title: '使用地点', data: data.usageLocation || [] },
-      behaviors: { title: '行为', data: data.behaviors || [] }
+      personas: { title: '人群特征', data: Array.isArray(data.demographics) ? data.demographics : [] },
+      moments: { title: '使用时刻', data: Array.isArray(data.usageTime) ? data.usageTime : [] },
+      locations: { title: '使用地点', data: Array.isArray(data.usageLocation) ? data.usageLocation : [] },
+      behaviors: { title: '行为', data: Array.isArray(data.behaviors) ? data.behaviors : [] }
     }
     
     console.log('📋 dimensionMap:', Object.keys(dimensionMap).map(k => `${k}: ${dimensionMap[k].data.length}条`))
     
     for (const [key, config] of Object.entries(dimensionMap)) {
-      let items = config.data
+      let items = config.data.slice(0, 3) // 只取前3个
+      
+      // ✅ 归一化占比：将前3个的占比重新计算为100%
+      const totalPercent = items.reduce((sum, item) => {
+        const percent = parseFloat(item.percent || item.percentage || 0)
+        return sum + percent
+      }, 0)
+      
+      if (totalPercent > 0) {
+        items = items.map(item => {
+          const originalPercent = parseFloat(item.percent || item.percentage || 0)
+          const normalizedPercent = ((originalPercent / totalPercent) * 100).toFixed(2)
+          return {
+            ...item,
+            percent: normalizedPercent,
+            percentage: normalizedPercent
+          }
+        })
+      }
       
       // ✅ 填充到3行
       while (items.length < 3) {
@@ -405,7 +423,7 @@ function renderConsumerProfile(data, container) {
       html += `
         <div class="dimension-column">
           <div class="dimension-header">${config.title}</div>
-          ${items.slice(0, 3).map(item => {
+          ${items.map(item => {
             // 兼容多种字段名
             const desc = item.persona || item.occasion || item.place || item.behavior || item.desc || item.description || '--'
             const percent = item.percent || item.percentage || '--'
@@ -442,6 +460,24 @@ function renderTableModule(contentId, data, container, showProgressBar = false, 
   const items = Array.isArray(data) ? data : (data?.items || [])
   let displayItems = items.slice(0, 5)
   
+  // ✅ 归一化占比：将前5个的占比重新计算为100%
+  const totalPercent = displayItems.reduce((sum, item) => {
+    const percent = parseFloat(item.percent || item.percentage || 0)
+    return sum + percent
+  }, 0)
+  
+  if (totalPercent > 0) {
+    displayItems = displayItems.map(item => {
+      const originalPercent = parseFloat(item.percent || item.percentage || 0)
+      const normalizedPercent = ((originalPercent / totalPercent) * 100).toFixed(2)
+      return {
+        ...item,
+        percent: normalizedPercent,
+        percentage: normalizedPercent
+      }
+    })
+  }
+  
   // ✅ 填充到5行（不足用"--"填充）
   while (displayItems.length < 5) {
     displayItems.push({
@@ -453,7 +489,7 @@ function renderTableModule(contentId, data, container, showProgressBar = false, 
       type: '--',
       percentage: '--',
       percent: '--',
-      reason: '--'
+      reason: '暂无说明'
     })
   }
   
@@ -543,7 +579,7 @@ function renderTableModule(contentId, data, container, showProgressBar = false, 
     }
     
     // 原因列（使用CSS省略，不做JS截断）
-    const fullReason = item.reason || item.reasons || '--'
+    const fullReason = item.reason || item.reasons || '暂无说明'
     html += `<td class="reason-col">${fullReason}</td>`
     
     html += `</tr>`
