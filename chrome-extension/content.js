@@ -397,24 +397,6 @@ function renderConsumerProfile(data, container) {
     for (const [key, config] of Object.entries(dimensionMap)) {
       let items = config.data.slice(0, 3) // 只取前3个
       
-      // ✅ 归一化占比：将前3个的占比重新计算为100%
-      const totalPercent = items.reduce((sum, item) => {
-        const percent = parseFloat(item.percent || item.percentage || 0)
-        return sum + percent
-      }, 0)
-      
-      if (totalPercent > 0) {
-        items = items.map(item => {
-          const originalPercent = parseFloat(item.percent || item.percentage || 0)
-          const normalizedPercent = ((originalPercent / totalPercent) * 100).toFixed(2)
-          return {
-            ...item,
-            percent: normalizedPercent,
-            percentage: normalizedPercent
-          }
-        })
-      }
-      
       // ✅ 填充到3行
       while (items.length < 3) {
         items.push({ desc: '--', description: '--', percentage: '--', percent: '--', persona: '--', occasion: '--', place: '--', behavior: '--' })
@@ -459,24 +441,6 @@ function renderTableModule(contentId, data, container, showProgressBar = false, 
   // ✅ 即使数据为空也要显示表格
   const items = Array.isArray(data) ? data : (data?.items || [])
   let displayItems = items.slice(0, 5)
-  
-  // ✅ 归一化占比：将前5个的占比重新计算为100%
-  const totalPercent = displayItems.reduce((sum, item) => {
-    const percent = parseFloat(item.percent || item.percentage || 0)
-    return sum + percent
-  }, 0)
-  
-  if (totalPercent > 0) {
-    displayItems = displayItems.map(item => {
-      const originalPercent = parseFloat(item.percent || item.percentage || 0)
-      const normalizedPercent = ((originalPercent / totalPercent) * 100).toFixed(2)
-      return {
-        ...item,
-        percent: normalizedPercent,
-        percentage: normalizedPercent
-      }
-    })
-  }
   
   // ✅ 填充到5行（不足用"--"填充）
   while (displayItems.length < 5) {
