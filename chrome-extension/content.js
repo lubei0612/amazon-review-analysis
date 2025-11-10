@@ -327,7 +327,10 @@ function renderConsumerProfile(data, container) {
   // ✅ 兼容新旧数据结构
   // 性别占比（如果有数据）
   const genderData = data.genderRatio || data.gender // 新结构用genderRatio，旧结构用gender
+  console.log('👥 完整消费者画像数据:', JSON.stringify(data, null, 2))
   console.log('👥 genderData:', genderData)
+  console.log('👥 data.genderRatio:', data.genderRatio)
+  console.log('👥 data.gender:', data.gender)
   
   if (genderData) {
     const rawMalePercent = genderData.male || 0
