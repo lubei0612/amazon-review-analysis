@@ -61,18 +61,18 @@
         <div class="col-desc">{{ isTranslated ? item.descCn : item.desc }}</div>
         <div class="col-percentage">
           <span class="percentage-text">
-            {{ (item.percentage * 100).toFixed(1) }}%
+            {{ formatPercentage(item.percentage) }}%
           </span>
           <div class="progress-bar-bg">
             <div 
               class="progress-bar-fill red" 
-              :style="{ width: (item.percentage * 100) + '%' }"
+              :style="{ width: Math.min(formatPercentage(item.percentage), 100) + '%' }"
             ></div>
           </div>
         </div>
         <div class="col-reason">
           <el-tooltip 
-            :content="isTranslated ? item.reasonCn : item.reason" 
+            :content="isTranslated ? (item.reasonCn || item.reason || '暂无说明') : (item.reason || '暂无说明')" 
             placement="top"
             :disabled="!reasonNeedsExpand(item.reason)"
           >
@@ -80,7 +80,7 @@
               :class="['reason-text', { 'expanded': expandedNegativeReasons[index] }]"
               @click="toggleNegativeReasonExpand(index)"
             >
-              {{ isTranslated ? item.reasonCn : item.reason }}
+              {{ isTranslated ? (item.reasonCn || item.reason || '暂无说明') : (item.reason || '暂无说明') }}
               <span v-if="reasonNeedsExpand(item.reason) && !expandedNegativeReasons[index]" class="expand-btn">
                 展开
               </span>
@@ -132,18 +132,18 @@
         <div class="col-desc">{{ isTranslated ? item.descCn : item.desc }}</div>
         <div class="col-percentage">
           <span class="percentage-text">
-            {{ (item.percentage * 100).toFixed(1) }}%
+            {{ formatPercentage(item.percentage) }}%
           </span>
           <div class="progress-bar-bg">
             <div 
               class="progress-bar-fill green" 
-              :style="{ width: (item.percentage * 100) + '%' }"
+              :style="{ width: Math.min(formatPercentage(item.percentage), 100) + '%' }"
             ></div>
           </div>
         </div>
         <div class="col-reason">
           <el-tooltip 
-            :content="isTranslated ? item.reasonCn : item.reason" 
+            :content="isTranslated ? (item.reasonCn || item.reason || '暂无说明') : (item.reason || '暂无说明')" 
             placement="top"
             :disabled="!reasonNeedsExpand(item.reason)"
           >
@@ -151,7 +151,7 @@
               :class="['reason-text', { 'expanded': expandedPositiveReasons[index] }]"
               @click="togglePositiveReasonExpand(index)"
             >
-              {{ isTranslated ? item.reasonCn : item.reason }}
+              {{ isTranslated ? (item.reasonCn || item.reason || '暂无说明') : (item.reason || '暂无说明') }}
               <span v-if="reasonNeedsExpand(item.reason) && !expandedPositiveReasons[index]" class="expand-btn">
                 展开
               </span>
@@ -267,6 +267,17 @@ function loadMorePositive() {
 
 function collapsePositive() {
   currentPositiveDisplayCount.value = INITIAL_DISPLAY_COUNT
+}
+
+// ✅ 格式化百分比（修复百分比显示过小的问题）
+function formatPercentage(value) {
+  if (!value) return 0
+  // 如果值已经是百分比形式（>1），直接返回
+  if (value > 1) {
+    return value.toFixed(1)
+  }
+  // 如果是小数形式（0-1），转换为百分比
+  return (value * 100).toFixed(1)
 }
 
 function handleDownload(command) {

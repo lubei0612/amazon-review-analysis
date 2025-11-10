@@ -77,7 +77,7 @@
         <div class="col-reason">
           <!-- 使用tooltip显示完整内容 -->
           <el-tooltip 
-            :content="isTranslated ? item.reasonCn : item.reason" 
+            :content="isTranslated ? (item.reasonCn || item.reason || '暂无说明') : (item.reason || '暂无说明')" 
             placement="top"
             :disabled="!reasonNeedsExpand(item.reason)"
           >
@@ -85,7 +85,7 @@
               :class="['reason-text', { 'expanded': expandedReasons[index] }]"
               @click="toggleReasonExpand(index)"
             >
-              {{ isTranslated ? item.reasonCn : item.reason }}
+              {{ isTranslated ? (item.reasonCn || item.reason || '暂无说明') : (item.reason || '暂无说明') }}
               <span v-if="reasonNeedsExpand(item.reason) && !expandedReasons[index]" class="expand-btn">
                 展开
               </span>

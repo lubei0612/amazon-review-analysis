@@ -13,7 +13,6 @@
           <el-icon><Search /></el-icon>
           搜索关键词: "{{ keyword }}"
         </el-tag>
-        <span class="result-count">找到 {{ filteredReviews.length }} 条相关评论</span>
       </div>
 
       <!-- 评论列表 -->
@@ -64,7 +63,7 @@
       <!-- 加载更多 -->
       <div v-if="hasMore" class="load-more-section">
         <el-button @click="loadMore" :loading="loading">
-          加载更多 ({{ displayedReviews.length }}/{{ filteredReviews.length }})
+          加载更多
         </el-button>
       </div>
     </div>

@@ -64,17 +64,17 @@
         </div>
         <div class="col-percentage">
           <span class="percentage-text">
-            {{ (item.percentage * 100).toFixed(1) }}%({{ item.count }})
+            {{ formatPercentage(item.percentage) }}%({{ item.count }})
           </span>
           <div class="progress-bar-bg">
             <div 
               class="progress-bar-fill blue" 
-              :style="{ width: (item.percentage * 100) + '%' }"
+              :style="{ width: Math.min(formatPercentage(item.percentage), 100) + '%' }"
             ></div>
           </div>
         </div>
         <div class="col-reason">
-          {{ isTranslated ? item.reasonCn : item.reason }}
+          {{ isTranslated ? (item.reasonCn || item.reason || '暂无说明') : (item.reason || '暂无说明') }}
         </div>
       </div>
     </div>
@@ -138,6 +138,17 @@ function loadMore() {
 
 function collapse() {
   currentDisplayCount.value = INITIAL_DISPLAY_COUNT
+}
+
+// ✅ 格式化百分比（修复百分比显示过小的问题）
+function formatPercentage(value) {
+  if (!value) return 0
+  // 如果值已经是百分比形式（>1），直接返回
+  if (value > 1) {
+    return value.toFixed(1)
+  }
+  // 如果是小数形式（0-1），转换为百分比
+  return (value * 100).toFixed(1)
 }
 
 function handleDownload(command) {
