@@ -129,13 +129,15 @@ function initUI(container) {
   const analyzeBtn = container.querySelector('#analyze-btn')
   
   if (analyzeBtn) {
+    // ✅ 修改按钮文字，标明快速分析
+    analyzeBtn.textContent = '⚡ 快速分析 (100条)'
     analyzeBtn.addEventListener('click', () => {
       startAnalysis(productInfo, container)
     })
   }
 }
 
-// 开始分析
+// 开始分析（快速模式：只分析100条评论）
 async function startAnalysis(productInfo, container) {
   const analyzeBtn = container.querySelector('#analyze-btn')
   const statusEl = container.querySelector('#status')
@@ -143,7 +145,7 @@ async function startAnalysis(productInfo, container) {
   const progressBarEl = container.querySelector('.progress-bar')
   
   if (analyzeBtn) analyzeBtn.disabled = true
-  if (statusEl) statusEl.textContent = '正在创建分析任务...'
+  if (statusEl) statusEl.textContent = '正在创建快速分析任务...'
   if (progressEl) progressEl.style.display = 'block'
   
   try {
@@ -152,11 +154,19 @@ async function startAnalysis(productInfo, container) {
       throw new Error('扩展已重新加载，请刷新页面后重试（按F5或Ctrl+R）')
     }
     
+    // ✅ 快速分析模式：只分析100条评论
+    const quickAnalysisData = {
+      ...productInfo,
+      reviewCount: 100,  // 限制为100条评论
+      analysisMode: 'quick',  // 标记为快速分析
+      source: 'chrome-extension-quick'
+    }
+    
     // 发送消息到Background Script
     const response = await new Promise((resolve, reject) => {
       chrome.runtime.sendMessage({
         action: 'startAnalysis',
-        data: productInfo
+        data: quickAnalysisData
       }, (response) => {
         if (chrome.runtime.lastError) {
           reject(new Error(`扩展通信失败: ${chrome.runtime.lastError.message}。请刷新页面后重试。`))
@@ -261,13 +271,15 @@ function displayAnalysisResults(result, taskId, container) {
   initExpandButtons(container)
   console.log('🔍 放大按钮事件已初始化')
   
-  // 修改底部按钮为"查看完整报告"
+  // ✅ 修改底部按钮为"查看完整报告"，强调分析级别差异
   const analyzeBtn = container.querySelector('#analyze-btn')
   const footerNote = container.querySelector('.footer-note')
   
   if (analyzeBtn) {
-    analyzeBtn.textContent = '📊 查看完整报告 →'
+    analyzeBtn.textContent = '📊 Web端完整分析（所有评论）→'
     analyzeBtn.disabled = false
+    analyzeBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    analyzeBtn.style.fontWeight = '600'
     analyzeBtn.onclick = async () => {
       // 获取配置的前端URL
       const config = await chrome.storage.local.get(['frontendUrl'])
@@ -278,7 +290,9 @@ function displayAnalysisResults(result, taskId, container) {
   }
   
   if (footerNote) {
-    footerNote.textContent = '当前分析结论取自 Top Reviews，点击右侧按钮查看完整报告'
+    footerNote.innerHTML = '⚡ <strong>当前：快速分析（100条评论）</strong> | 点击上方按钮查看Web端完整分析（所有评论）'
+    footerNote.style.fontSize = '12px'
+    footerNote.style.color = '#6B7280'
   }
 }
 
@@ -587,7 +601,10 @@ function showFullDataModal(contentId, items, type) {
   let tableHtml = `
     <div style="background:white;border-radius:12px;max-width:900px;max-height:80vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:slideUp 0.3s ease;">
       <div style="padding:20px;border-bottom:2px solid #E5E7EB;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;z-index:1;">
-        <h2 style="margin:0;color:#1F2937;font-size:20px;">📊 ${title} - 完整数据 (${items.length}条)</h2>
+        <div>
+          <h2 style="margin:0;color:#1F2937;font-size:20px;">⚡ ${title} - 快速分析数据</h2>
+          <p style="margin:4px 0 0 0;font-size:12px;color:#6B7280;">共 ${items.length} 条（基于100条评论分析）</p>
+        </div>
         <button id="close-modal-${contentId}" style="background:#EF4444;color:white;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;line-height:32px;padding:0;" onmouseover="this.style.background='#DC2626'" onmouseout="this.style.background='#EF4444'">×</button>
       </div>
       <div style="padding:20px;">

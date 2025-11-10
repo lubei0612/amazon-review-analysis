@@ -54,6 +54,10 @@
               <span class="asin-text">ASIN: {{ productData.asin }}</span>
                   <span class="divider">|</span>
                   <span class="review-count">{{ productData.reviewCount }} 条评论</span>
+                  <span v-if="productData.analysisMode" class="divider">|</span>
+                  <span v-if="productData.analysisMode" :class="['analysis-mode-badge', productData.analysisMode === 'quick' ? 'quick' : 'full']">
+                    {{ productData.analysisMode === 'quick' ? '⚡ 快速分析' : '📊 完整分析' }}
+                  </span>
                   <span v-if="productData.analyzedAt" class="divider">|</span>
                   <span v-if="productData.analyzedAt" class="analyzed-time">分析于: {{ formatDate(productData.analyzedAt) }}</span>
                 </div>
@@ -481,6 +485,7 @@ onMounted(async () => {
               productNameCn: taskData.result.meta?.productTitle || 'Amazon产品分析',
               productImage: taskData.result.meta?.productImage || taskData.productImage || '',
               reviewCount: taskData.result.reviews?.length || 0,
+              analysisMode: taskData.result.meta?.analysisMode || taskData.analysisMode || 'full',  // ✅ 保存分析模式
               analyzedAt: taskData.result.meta?.analyzedAt || taskData.createdAt || new Date().toISOString(),
               reviews: taskData.result.reviews || [],
               // ✅ 明确赋值每个分析维度
@@ -789,6 +794,26 @@ onUnmounted(() => {
   .asin-text {
     color: #6b7280;
     font-weight: 500;
+  }
+  
+  // ✅ 分析模式标签样式
+  .analysis-mode-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    
+    &.quick {
+      background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+      color: #92400E;
+      border: 1px solid #FCD34D;
+    }
+    
+    &.full {
+      background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+      color: #065F46;
+      border: 1px solid #6EE7B7;
+    }
   }
 }
 

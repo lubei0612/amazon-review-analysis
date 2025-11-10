@@ -391,8 +391,9 @@ async function handleSearch() {
       body: JSON.stringify({
         asin: asin,
         productUrl: `https://www.${currentCountry.value.domain}/dp/${asin}`,
-        reviewCount: 500,
-        source: 'web-frontend',
+        reviewCount: 1000,  // ✅ Web端完整分析：最多1000条评论
+        analysisMode: 'full',  // ✅ 标记为完整分析模式
+        source: 'web-frontend-full',
         analysisOptions: {
           enableConsumerProfile: true,
           enableUsageScenarios: true,
@@ -483,8 +484,9 @@ async function handleCreateReport() {
       body: JSON.stringify({
         asin: asin,
         productUrl: `https://www.${selectedCountry.domain}/dp/${asin}`,
-        reviewCount: 500,
-        source: 'web-frontend',
+        reviewCount: 1000,  // ✅ Web端完整分析：最多1000条评论
+        analysisMode: 'full',  // ✅ 标记为完整分析模式
+        source: 'web-frontend-full',
         analysisOptions: {
           enableConsumerProfile: true,
           enableUsageScenarios: true,
