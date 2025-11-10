@@ -637,19 +637,20 @@ function showFullDataModal(contentId, items, type) {
   `
   
   items.forEach((item, index) => {
-    const percent = item.percent || item.percentage || '--'
-    const percentValue = percent !== '--' ? parseInt(percent) : 0
+    const rawPercent = item.percent || item.percentage || '--'
+    const percent = formatPercentage(rawPercent)
+    const percentValue = percent !== '--' ? parseFloat(percent) : 0
     let description = '--'
     if (contentId === 'purchase-motivation-content') {
-      description = item.type || '--'
+      description = item.descCn || item.desc || item.type || '--'
     } else if (contentId === 'usage-scenarios-content') {
       description = item.name || item.description || '--'
     } else if (contentId === 'unmet-needs-content') {
-      description = item.need || item.description || '--'
+      description = item.descCn || item.desc || item.need || item.description || '--'
     } else {
       description = item.aspect || item.desc || '--'
     }
-    const reason = item.reason || '--'
+    const reason = item.reason || item.reasons || '暂无说明'
     
     // 根据类型选择进度条颜色
     let bgColor = 'linear-gradient(90deg, #3B82F6, #60A5FA)'  // 默认蓝色
