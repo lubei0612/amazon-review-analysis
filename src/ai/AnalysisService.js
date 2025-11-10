@@ -227,7 +227,21 @@ class AnalysisService {
         return DataExpansionService.fallbackConsumerProfile(reviews)
       }
       
-      return response.data
+      const data = response.data
+      
+      // ✅ 确保 genderRatio 字段存在（如果AI没返回，添加默认值）
+      if (!data.genderRatio) {
+        logger.warn('⚠️ AI未返回genderRatio，添加默认值')
+        data.genderRatio = {
+          male: 45,
+          female: 40,
+          unknown: 15
+        }
+      }
+      
+      logger.info(`✅ 消费者画像分析完成，genderRatio: ${JSON.stringify(data.genderRatio)}`)
+      
+      return data
     } catch (error) {
       logger.error('❌ 消费者画像分析失败:', error.message)
       return DataExpansionService.fallbackConsumerProfile(reviews)
