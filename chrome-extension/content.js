@@ -4,6 +4,16 @@
 
 console.log('Amazon评论分析助手已加载')
 
+// 百分比格式化函数
+function formatPercentage(value) {
+  if (value === '--' || value === null || value === undefined) return '--'
+  const num = parseFloat(value)
+  if (isNaN(num)) return '--'
+  // 如果值小于等于1，认为是小数格式(0.23)，需要乘以100
+  // 如果值大于1，认为已经是百分比格式(23)，直接使用
+  return num <= 1 ? (num * 100).toFixed(2) : num.toFixed(2)
+}
+
 // 提取产品信息
 function extractProductInfo() {
   const urlMatch = window.location.href.match(/\/dp\/([A-Z0-9]{10})|\/product\/([A-Z0-9]{10})/)
@@ -320,8 +330,10 @@ function renderConsumerProfile(data, container) {
   console.log('👥 genderData:', genderData)
   
   if (genderData) {
-    const malePercent = genderData.male || 0
-    const femalePercent = genderData.female || 0
+    const rawMalePercent = genderData.male || 0
+    const rawFemalePercent = genderData.female || 0
+    const malePercent = formatPercentage(rawMalePercent)
+    const femalePercent = formatPercentage(rawFemalePercent)
     
     html += `
       <div class="gender-section">
@@ -408,7 +420,8 @@ function renderConsumerProfile(data, container) {
           ${items.map(item => {
             // 兼容多种字段名
             const desc = item.persona || item.occasion || item.place || item.behavior || item.desc || item.description || '--'
-            const percent = item.percent || item.percentage || '--'
+            const rawPercent = item.percent || item.percentage || '--'
+            const percent = formatPercentage(rawPercent)
             return `<div class="dimension-item">${desc} (${percent}${percent !== '--' ? '%' : ''})</div>`
           }).join('')}
         </div>
@@ -470,7 +483,7 @@ function renderTableModule(contentId, data, container, showProgressBar = false, 
         style="background:#3B82F6;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:500;box-shadow:0 2px 4px rgba(0,0,0,0.1);"
         onmouseover="this.style.background='#2563EB';this.style.transform='translateY(-1px)'" 
         onmouseout="this.style.background='#3B82F6';this.style.transform='translateY(0)'">
-        📋 查看全部 (${items.length}条)
+        📋 查看全部
       </button>
     </div>
   ` : ''
@@ -488,8 +501,9 @@ function renderTableModule(contentId, data, container, showProgressBar = false, 
   `
   
   displayItems.forEach(item => {
-    const percent = item.percent || item.percentage || '--'
-    const percentValue = percent !== '--' ? parseInt(percent) : 0
+    const rawPercent = item.percent || item.percentage || '--'
+    const percent = formatPercentage(rawPercent)
+    const percentValue = percent !== '--' ? parseFloat(percent) : 0
     
     html += `<tr>`
     
