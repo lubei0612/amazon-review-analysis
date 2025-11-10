@@ -373,35 +373,27 @@ function renderConsumerProfile(data, container) {
     `
   }
   
-  // ✅ 4维度数据（兼容新旧结构）
-  // 新结构：demographics, usageTime, usageLocation, behaviors
-  // 旧结构：dimensions { personas, moments, locations, behaviors }
+  // ✅ 4维度数据（标准字段：persona, usageTime, usageLocation, behavior）
   
   console.log('📋 检查dimensions字段:', {
-    hasDimensions: !!data.dimensions,
-    hasDemographics: !!data.demographics,
+    hasPersona: !!data.persona,
     hasUsageTime: !!data.usageTime,
     hasUsageLocation: !!data.usageLocation,
-    hasBehaviors: !!data.behaviors
+    hasBehavior: !!data.behavior
   })
   
-  // ✅ 只要有任意维度数据就显示（不要求全部存在）
-  const hasDimensions = data.dimensions || data.demographics || data.usageTime || data.usageLocation || data.behaviors
+  // ✅ 只要有任意维度数据就显示
+  const hasDimensions = data.persona || data.usageTime || data.usageLocation || data.behavior
   
   if (hasDimensions) {
     html += `<div class="dimensions-table">`
     
-    // 映射新旧字段名，确保数组类型
-    const dimensionMap = data.dimensions ? {
-      personas: { title: '人群特征', data: Array.isArray(data.dimensions.personas) ? data.dimensions.personas : [] },
-      moments: { title: '使用时刻', data: Array.isArray(data.dimensions.moments) ? data.dimensions.moments : [] },
-      locations: { title: '使用地点', data: Array.isArray(data.dimensions.locations) ? data.dimensions.locations : [] },
-      behaviors: { title: '行为', data: Array.isArray(data.dimensions.behaviors) ? data.dimensions.behaviors : [] }
-    } : {
-      personas: { title: '人群特征', data: Array.isArray(data.demographics) ? data.demographics : [] },
-      moments: { title: '使用时刻', data: Array.isArray(data.usageTime) ? data.usageTime : [] },
-      locations: { title: '使用地点', data: Array.isArray(data.usageLocation) ? data.usageLocation : [] },
-      behaviors: { title: '行为', data: Array.isArray(data.behaviors) ? data.behaviors : [] }
+    // 标准字段映射
+    const dimensionMap = {
+      persona: { title: '人群特征', data: Array.isArray(data.persona) ? data.persona : [] },
+      usageTime: { title: '使用时刻', data: Array.isArray(data.usageTime) ? data.usageTime : [] },
+      usageLocation: { title: '使用地点', data: Array.isArray(data.usageLocation) ? data.usageLocation : [] },
+      behavior: { title: '行为', data: Array.isArray(data.behavior) ? data.behavior : [] }
     }
     
     console.log('📋 dimensionMap:', Object.keys(dimensionMap).map(k => `${k}: ${dimensionMap[k].data.length}条`))
@@ -409,19 +401,32 @@ function renderConsumerProfile(data, container) {
     for (const [key, config] of Object.entries(dimensionMap)) {
       let items = config.data.slice(0, 3) // 只取前3个
       
+      // ✅ 计算总数用于计算百分比
+      const totalCount = items.reduce((sum, item) => {
+        const positive = parseInt(item.positiveCount || 0)
+        const negative = parseInt(item.negativeCount || 0)
+        return sum + positive + negative
+      }, 0)
+      
       // ✅ 填充到3行
       while (items.length < 3) {
-        items.push({ desc: '--', description: '--', percentage: '--', percent: '--', persona: '--', occasion: '--', place: '--', behavior: '--' })
+        items.push({ keywordCn: '--', positiveCount: 0, negativeCount: 0 })
       }
       
       html += `
         <div class="dimension-column">
           <div class="dimension-header">${config.title}</div>
           ${items.map(item => {
-            // 兼容多种字段名
-            const desc = item.persona || item.occasion || item.place || item.behavior || item.desc || item.description || '--'
-            const rawPercent = item.percent || item.percentage || '--'
-            const percent = formatPercentage(rawPercent)
+            // 使用keywordCn作为显示文本
+            const desc = item.keywordCn || item.keyword || '--'
+            
+            // 计算百分比
+            let percent = '--'
+            if (totalCount > 0 && desc !== '--') {
+              const itemCount = (parseInt(item.positiveCount || 0) + parseInt(item.negativeCount || 0))
+              percent = ((itemCount / totalCount) * 100).toFixed(2)
+            }
+            
             return `<div class="dimension-item">${desc} (${percent}${percent !== '--' ? '%' : ''})</div>`
           }).join('')}
         </div>
@@ -510,11 +515,11 @@ function renderTableModule(contentId, data, container, showProgressBar = false, 
     // 描述列（针对不同模块使用不同字段，截断长度改为10字符）
     let description = '--'
     if (contentId === 'purchase-motivation-content') {
-      description = item.type || '--'  // 购买动机显示type
+      description = item.descCn || item.desc || item.type || '--'  // 购买动机显示descCn
     } else if (contentId === 'usage-scenarios-content') {
       description = item.name || item.description || '--'  // 使用场景显示name
     } else if (contentId === 'unmet-needs-content') {
-      description = item.need || item.description || '--'  // 未满足需求显示need
+      description = item.descCn || item.desc || item.need || item.description || '--'  // 未满足需求显示descCn
     } else {
       description = item.aspect || item.desc || '--'  // 好评/差评显示aspect
     }
