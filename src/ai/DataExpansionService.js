@@ -209,6 +209,11 @@ class DataExpansionService {
     ].slice(0, 8)
     
     return {
+      genderRatio: {
+        male: 45.00,
+        female: 40.00,
+        unknown: 15.00
+      },
       persona: [
         { keyword: "Tech Enthusiasts", keywordCn: "科技爱好者", positiveCount: Math.floor(reviews.length * 0.3), negativeCount: Math.floor(reviews.length * 0.05) },
         { keyword: "Daily Users", keywordCn: "日常用户", positiveCount: Math.floor(reviews.length * 0.25), negativeCount: Math.floor(reviews.length * 0.08) },
