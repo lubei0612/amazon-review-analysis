@@ -601,10 +601,7 @@ function showFullDataModal(contentId, items, type) {
   let tableHtml = `
     <div style="background:white;border-radius:12px;max-width:900px;max-height:80vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:slideUp 0.3s ease;">
       <div style="padding:20px;border-bottom:2px solid #E5E7EB;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;z-index:1;">
-        <div>
-          <h2 style="margin:0;color:#1F2937;font-size:20px;">⚡ ${title} - 快速分析数据</h2>
-          <p style="margin:4px 0 0 0;font-size:12px;color:#6B7280;">共 ${items.length} 条（基于100条评论分析）</p>
-        </div>
+        <h2 style="margin:0;color:#1F2937;font-size:20px;">📊 ${title} - 查看全部</h2>
         <button id="close-modal-${contentId}" style="background:#EF4444;color:white;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;line-height:32px;padding:0;" onmouseover="this.style.background='#DC2626'" onmouseout="this.style.background='#EF4444'">×</button>
       </div>
       <div style="padding:20px;">

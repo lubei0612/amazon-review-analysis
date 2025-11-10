@@ -37,6 +37,7 @@ class TaskService {
       cookies: taskData.cookies,
       apiKey: taskData.apiKey,  // ✅ 保存 API Key
       analysisOptions: taskData.analysisOptions || {},
+      analysisMode: taskData.analysisMode || 'full',  // ✅ 保存分析模式
       status: 'pending',
       progress: 0,
       createdAt: new Date(),
@@ -144,7 +145,8 @@ class TaskService {
             ...analysisResult.meta,
             productImage: productInfo.image || '',
             productTitle: productInfo.productTitle || task.asin,
-            totalReviews: sortedReviews.length
+            totalReviews: sortedReviews.length,
+            analysisMode: task.analysisMode || 'full'  // ✅ 包含分析模式
           }
         }
       })

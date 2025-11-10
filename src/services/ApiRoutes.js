@@ -24,7 +24,7 @@ router.get('/health', (req, res) => {
  */
 router.post('/tasks/create', async (req, res) => {
   try {
-    const { productUrl, asin, reviewCount, source, analysisOptions } = req.body
+    const { productUrl, asin, reviewCount, source, analysisOptions, analysisMode } = req.body
     
     // ✅ 简化验证：只需要 asin（可从productUrl提取）
     if (!asin && !productUrl) {
@@ -50,13 +50,15 @@ router.post('/tasks/create', async (req, res) => {
       })
     }
     
-    logger.info(`收到分析请求: ASIN ${finalAsin} (来源: ${source || 'unknown'})`)
+    const mode = analysisMode || 'full'  // 默认为完整分析
+    logger.info(`收到分析请求: ASIN ${finalAsin}, 模式: ${mode}, 评论数: ${reviewCount || '默认'} (来源: ${source || 'unknown'})`)
     
     const taskId = await taskService.createTask({
       productUrl: productUrl || `https://www.amazon.com/dp/${finalAsin}`,
       asin: finalAsin,
       reviewCount,
-      analysisOptions
+      analysisOptions,
+      analysisMode: mode  // ✅ 传递分析模式
     })
     
     res.json({
