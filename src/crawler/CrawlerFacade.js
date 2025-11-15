@@ -56,36 +56,36 @@ class CrawlerFacade {
     logger.info(`   目标评论数: ${maxReviews === Infinity ? '全量（无限制）' : maxReviews + '条'}`)
     logger.info(`   Amazon站点: ${domain}`)
     
-    try {
+      try {
       logger.info('🚀 使用 Apify 爬虫...')
-      
-      const result = await this.apify.getReviews(
-        asin,
-        maxReviews,
-        onProgress
-      )
-      
-      const reviews = result.reviews || result // 兼容旧格式
-      const productInfo = result.productInfo || {}
-      
-      logger.info(`✅ Apify成功，获取 ${reviews.length} 条评论`)
-      
+        
+        const result = await this.apify.getReviews(
+          asin,
+          maxReviews,
+          onProgress
+        )
+        
+        const reviews = result.reviews || result // 兼容旧格式
+        const productInfo = result.productInfo || {}
+        
+        logger.info(`✅ Apify成功，获取 ${reviews.length} 条评论`)
+        
       // 检查空数据
-      if (reviews.length === 0) {
+        if (reviews.length === 0) {
         logger.warn('⚠️ Apify返回0条评论')
         throw new Error('未找到评论数据，请检查ASIN是否正确')
-      }
-      
-      return {
-        success: true,
-        source: 'Apify',
-        reviews: reviews,
-        productInfo: productInfo,
-        count: reviews.length,
-        asin: asin
-      }
-      
-    } catch (error) {
+        }
+        
+        return {
+          success: true,
+          source: 'Apify',
+          reviews: reviews,
+          productInfo: productInfo,
+          count: reviews.length,
+          asin: asin
+        }
+        
+      } catch (error) {
       logger.error(`❌ Apify爬取失败: ${error.message}`)
       throw new Error(`评论爬取失败: ${error.message}`)
     }
@@ -177,8 +177,8 @@ class CrawlerFacade {
       }
     }
     
-    return {
-      status: 'excellent',
+      return {
+        status: 'excellent',
       message: '✅ Apify已配置，系统就绪！',
       features: [
         '✓ 支持大规模爬取（2000+条评论）',

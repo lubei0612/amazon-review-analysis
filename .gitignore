@@ -56,6 +56,16 @@ latest_task.txt
 test_task.txt
 analysis_result.json
 
+# Test files
+test_result.json
+openapi.json
+
+# Windows batch files (optional, keep in repo for reference)
+# *.bat
+
+# Zip archives
+*.zip
+
 # Archives (keep the directory structure but ignore generated files)
 _archive/debug-files/*.png
 _archive/debug-files/*.html

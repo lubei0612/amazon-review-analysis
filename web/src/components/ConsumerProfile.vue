@@ -833,24 +833,24 @@ async function exportToPNG() {
     }
   }
 
-  .view-more-trigger {
-    margin-top: 16px;
-    padding: 12px;
-    text-align: center;
-    color: #3b82f6;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+    .view-more-trigger {
+      margin-top: 16px;
+      padding: 12px;
+      text-align: center;
+      color: #3b82f6;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
 
-    &:hover {
-      background: #eff6ff;
-      color: #2563eb;
+      &:hover {
+        background: #eff6ff;
+        color: #2563eb;
     }
   }
 }
