@@ -18,7 +18,7 @@ RUN npm ci --only=production && npm cache clean --force
 COPY . .
 
 # 复制并设置entrypoint脚本
-COPY docker-entrypoint.sh /usr/local/bin/
+COPY scripts/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # 创建日志目录
