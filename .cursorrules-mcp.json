@@ -6,6 +6,21 @@
       "env": {
         "OUTSCRAPER_API_KEY": "M2UyNTc2NDYyMjQxNDVmNjhiMDY2YzZlMDE4MDQ5MTJ8MjYyNTMwY2RhOA"
       }
+    },
+    "spec-workflow": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@pimzino/spec-workflow-mcp@latest",
+        "d:\\Users\\Desktop\\maijiaplug"
+      ]
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest"
+      ]
     }
   }
 }
