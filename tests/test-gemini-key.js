@@ -1,8 +1,15 @@
 // 测试指定的Gemini API Key
 const axios = require('axios');
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '..', 'server.env') });
 
-const apiKey = 'sk-38uw2rUlFvqNr4XUDcF32643AcB844Aa9097Ab40E7823f5d';
-const baseUrl = 'https://aihubmix.com/v1';
+const apiKey = process.env.GEMINI_API_KEY;
+const baseUrl = process.env.GEMINI_BASE_URL || 'https://aihubmix.com/v1';
+
+if (!apiKey) {
+  console.error('❌ 未检测到 GEMINI_API_KEY 环境变量，请在 server.env 中配置');
+  process.exit(1);
+}
 
 async function testGeminiKey() {
   console.log('========================================');
