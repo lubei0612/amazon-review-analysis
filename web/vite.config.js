@@ -15,7 +15,15 @@ export default defineConfig({
     host: '0.0.0.0',
     strictPort: false,
     open: true,
-    cors: true
+    cors: true,
+    // ✅ API代理：将/api请求转发到后端
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false
+      }
+    }
   },
   build: {
     outDir: 'dist',
