@@ -1,7 +1,7 @@
 // 测试新的Apify API密钥
 require('dotenv').config()
-const ApifyAmazonCrawler = require('./src/crawler/ApifyAmazonCrawler')
-const logger = require('./utils/logger')
+const ApifyAmazonCrawler = require('../src/crawler/ApifyAmazonCrawler')
+const logger = require('../utils/logger')
 
 console.log('='.repeat(80))
 console.log('🧪 测试新的Apify API密钥')

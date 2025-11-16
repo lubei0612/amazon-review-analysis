@@ -568,7 +568,9 @@ function handleImageError(event) {
 // ✅ 轮询任务状态
 async function pollTaskStatus(taskId, report) {
   let attempts = 0
-  const maxAttempts = 90 // 最多3分钟
+  const POLL_INTERVAL = 2000 // 2秒轮询一次
+  const MAX_WAIT_TIME = 10 * 60 * 1000 // 10分钟上限，避免长任务被判失败
+  const maxAttempts = Math.ceil(MAX_WAIT_TIME / POLL_INTERVAL)
   
   const poll = async () => {
     try {
@@ -625,7 +627,7 @@ async function pollTaskStatus(taskId, report) {
           const statusText = statusMap[taskData.status] || '处理中'
           report.name = `${report.realAsin || taskId.slice(0, 8)} - ${statusText}`
           attempts++
-          setTimeout(poll, 2000) // 2秒后再次轮询
+          setTimeout(poll, POLL_INTERVAL) // 2秒后再次轮询
           
         } else {
           // 超时
